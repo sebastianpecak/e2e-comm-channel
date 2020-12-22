@@ -1,1 +1,14 @@
 syntax = "proto3";
+
+/*
+ * Put everything into ReceiveMessage namespace.
+ */ 
+package ReceiveMessage;
+
+message Request
+{
+}
+
+message Response
+{
+}
