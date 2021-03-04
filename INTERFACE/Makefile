@@ -6,7 +6,7 @@ OUTPUT_NAME = interface
 OUTPUT_LIB_NAME = lib$(OUTPUT_NAME)
 
 # If some files should not be compiled - put them here.
-EXCLUDED_PROTO =
+EXCLUDED_PROTO = AddNewUser.proto SendMessage.proto BaseMessage.proto ReceiveMessage.proto FileMessage.proto
 
 # Do not remove intermediate files. 
 .PRECIOUS: %.pb.h %.pb.cc %.pb.cc.o
@@ -26,21 +26,29 @@ install:
 
 # Helper target to print all Makefile's variables.
 debug_print:
-	@echo === ALL VARIABLES ===
-	@echo "OUTPUT_NAME    : $(OUTPUT_NAME)"
-	@echo "OUTPUT_LIB_NAME: $(OUTPUT_LIB_NAME)"
-	@echo "EXCLUDED_PROTO : $(EXCLUDED_PROTO)"
-	@echo "ALL_PROTO      : $(ALL_PROTO)"
-	@echo "BUILD_PROTO    : $(BUILD_PROTO)"
-	@echo "BUILD_SOURCES  : $(BUILD_SOURCES)"
-	@echo "BUILD_HEADERS  : $(BUILD_HEADERS)"
-	@echo "BUILD_OBJECTS  : $(BUILD_OBJECTS)"
-	@echo "RM             : $(RM)"
-	@echo "PBC            : $(PBC)"
-	@echo "C              : $(C)"
-	@echo "CC             : $(CC)"
-	@echo "AR             : $(AR)"
-	@echo === ALL VARIABLES END ===
+	@echo "All variables:"
+	@echo "    OUTPUT_NAME    : $(OUTPUT_NAME)"
+	@echo "    OUTPUT_LIB_NAME: $(OUTPUT_LIB_NAME)"
+	@echo "    EXCLUDED_PROTO : $(EXCLUDED_PROTO)"
+	@echo "    ALL_PROTO      : $(ALL_PROTO)"
+	@echo "    BUILD_PROTO    : $(BUILD_PROTO)"
+	@echo "    BUILD_SOURCES  : $(BUILD_SOURCES)"
+	@echo "    BUILD_HEADERS  : $(BUILD_HEADERS)"
+	@echo "    BUILD_OBJECTS  : $(BUILD_OBJECTS)"
+	@echo "    RM             : $(RM)"
+	@echo "    PBC            : $(PBC)"
+	@echo "    C              : $(C)"
+	@echo "    CC             : $(CC)"
+	@echo "    AR             : $(AR)"
+
+# Display makefile help.
+help:
+	@echo "You can invoke this Makefile in the following ways:"
+	@echo "    make             - will build default target, i.e. shared and static libraries."
+	@echo "    make clean       - will remove all build artifacts / all make-generated files."
+	@echo "    make install     - will install binaries on the system in the E2E_INTERFACE_INSTALL_PATH path."
+	@echo "    make debug_print - will print all Makefile's variables."
+	@echo "    make help        - will display Makefile's help."
 
 %.pb.h: %.proto
 	$(PBC) --cpp_out=. $<

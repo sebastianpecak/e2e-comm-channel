@@ -1,0 +1,18 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+/*
+ * Use existsing Hash data type.
+ */
+import 'Hash.proto';
+
+/*
+ * This is the data structure that carriers plain text message.
+ */ 
+message PlainTextMessage
+{
+    string text  = 1;
+    Hash msgHash = 2;
+}

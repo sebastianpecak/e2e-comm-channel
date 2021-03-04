@@ -1,0 +1,15 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+/*
+ * This data type carries information about sender of the message.
+ * Message itself is encrypted using sender's private key.
+ * That assures that only true sender of given id could send it.
+ */
+message SourceMessage
+{
+    string senderId = 1;
+    bytes encMsg    = 2;
+}

@@ -1,0 +1,15 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+/*
+ * This data type carries information about recipient of the message.
+ * Message itself is encrypted using recipient's public key.
+ * Only true recipient is able to decrypt it.
+ */ 
+message TargetMessage
+{
+    string recipientId = 1;
+    bytes encSrcMsg    = 2;
+}

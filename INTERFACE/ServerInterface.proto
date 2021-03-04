@@ -1,0 +1,39 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+enum RequestType
+{
+    GET_SVR_INFO = 0; // For debug purposes. Get server information.
+    SEND_MSG     = 1; // Used to send new message to target user through relay server.
+    RECV_ALL_MSG = 2; // Used to get all messages for given user from relay server.
+}
+
+enum ReplyCode
+{
+    SUCCESS = 0;
+    FAILURE = 1;
+}
+
+/*
+ * This is the structure of a generic request to the server.
+ * Server uses UDP sockets to serve clients and those data types need to carry additional
+ * data used to identify request/relpy pairs, send retry count.
+ * It also contains request type and proper payload in form of serialized message.
+ */
+message Request
+{
+    RequestType type  = 1;
+    uint32 id         = 2;
+    uint32 retryCount = 3;
+    bytes data        = 4;
+}
+
+message Reply
+{
+    RequestType type  = 1;
+    uint32 id         = 2;
+    uint32 retryCount = 3;
+    ReplyCode reply   = 4;
+}

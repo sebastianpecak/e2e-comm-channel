@@ -1,0 +1,23 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+/*
+ * Type of hash value.
+ */ 
+enum HashType
+{
+    MD5    = 0;
+    SHA256 = 1;
+}
+
+/*
+ * This is the data structure that carriers cryptographic hash function value.
+ * It can be embedded into other message types.
+ */ 
+message Hash
+{
+    HashType type = 1;
+    bytes value   = 2;
+}
