@@ -1,60 +1,78 @@
 # Use common project's makefile tools.
-include common.mk
+include ../../COMMON/common.mk
 
 # Library output name.
-OUTPUT_NAME = e2ecli
-OUTPUT_APP_NAME = $(OUTPUT_NAME).app
+OUTPUT_NAME      = cli
+OUTPUT_APP_NAME  = $(OUTPUT_NAME).app
+OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 
-# If some files should not be compiled - put them here.
-EXCLUDED_PROTO =
+ALL_TEST_SRC      = $(shell ls *_test.cc 2>/dev/null)
+BUILD_TEST_OBJ    = $(patsubst %.cc,%.cc.o, $(ALL_TEST_SRC))
+EXCLUDED_CC_SRC   = $(ALL_TEST_SRC)
+ALL_CC_SRC        = $(shell ls *.cc 2>/dev/null)
+BUILD_CC_SRC      = $(filter-out $(EXCLUDED_CC_SRC), $(ALL_CC_SRC))
+BUILD_OBJ         = $(patsubst %.cc,%.cc.o, $(BUILD_CC_SRC))
+BUILD_OBJ_NO_MAIN = $(filter-out main.cc.o, $(BUILD_OBJ))
+# List of external dependencies like shared/static libraries.
+APP_DEPENDENCIES  = ../../INTERFACE/libinterface.a
+TEST_DEPENDENCIES = /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a
 
 # Do not remove intermediate files. 
-.PRECIOUS: %.pb.h %.pb.cc %.pb.cc.o
+.PRECIOUS: %.cc.o %.a %.so
 
 # Main target. Build interface library.
-main: $(OUTPUT_LIB_NAME).so $(OUTPUT_LIB_NAME).a
+main: $(OUTPUT_APP_NAME)
+	@echo "$@: Done."
 
 # Remove all build artifacts and ProtoBuf generated sources and headers.
 clean:
-	@$(RM) *.pb.*
-	@$(RM) *.so
-	@$(RM) *.a
+	@$(RM) *.cc.o
+	@$(RM) $(OUTPUT_APP_NAME)
 
 # Install built library in target location.
 install:
 	@echo "$@: Not implemented yet."
 
+# Build and run unit tests.
+test: $(OUTPUT_TEST_NAME)
+# Run tests.
+	@./$<
+	@echo "$@: Done."
+
+$(OUTPUT_TEST_NAME): $(BUILD_OBJ_NO_MAIN) $(BUILD_TEST_OBJ) $(TEST_DEPENDENCIES)
+	$(CC) -o $@ $^ -lpthread
+
 # Helper target to print all Makefile's variables.
 debug_print:
-	@echo === ALL VARIABLES ===
-	@echo "OUTPUT_NAME    : $(OUTPUT_NAME)"
-	@echo "OUTPUT_LIB_NAME: $(OUTPUT_LIB_NAME)"
-	@echo "EXCLUDED_PROTO : $(EXCLUDED_PROTO)"
-	@echo "ALL_PROTO      : $(ALL_PROTO)"
-	@echo "BUILD_PROTO    : $(BUILD_PROTO)"
-	@echo "BUILD_SOURCES  : $(BUILD_SOURCES)"
-	@echo "BUILD_HEADERS  : $(BUILD_HEADERS)"
-	@echo "BUILD_OBJECTS  : $(BUILD_OBJECTS)"
-	@echo "RM             : $(RM)"
-	@echo "PBC            : $(PBC)"
-	@echo "C              : $(C)"
-	@echo "CC             : $(CC)"
-	@echo "AR             : $(AR)"
-	@echo === ALL VARIABLES END ===
+	@echo "All variables:"
+	@echo "    OUTPUT_NAME      : $(OUTPUT_NAME)"
+	@echo "    OUTPUT_APP_NAME  : $(OUTPUT_APP_NAME)"
+	@echo "    OUTPUT_TEST_NAME : $(OUTPUT_TEST_NAME)"
+	@echo "    ALL_TEST_SRC     : $(ALL_TEST_SRC)"
+	@echo "    BUILD_TEST_OBJ   : $(BUILD_TEST_OBJ)"
+	@echo "    EXCLUDED_CC_SRC  : $(EXCLUDED_CC_SRC)"
+	@echo "    ALL_CC_SRC       : $(ALL_CC_SRC)"
+	@echo "    BUILD_CC_SRC     : $(BUILD_CC_SRC)"
+	@echo "    BUILD_OBJ        : $(BUILD_OBJ)"
+	@echo "    BUILD_OBJ_NO_MAIN: $(BUILD_OBJ_NO_MAIN)"
+	@echo "    APP_DEPENDENCIES : $(APP_DEPENDENCIES)"
+	@echo "    TEST_DEPENDENCIES: $(TEST_DEPENDENCIES)"
+	@echo "    RM               : $(RM)"
+	@echo "    PBC              : $(PBC)"
+	@echo "    C                : $(C)"
+	@echo "    CC               : $(CC)"
+	@echo "    AR               : $(AR)"
 
-%.pb.h: %.proto
-	$(PBC) --cpp_out=. $<
+# Make external static library.
+%.a:
+	$(MAKE) -C $(dir $@)
 
-%.pb.cc: %.pb.h
-# Empty rule. Just proxy to have both cc and h as target dependencies.
-# : is bash no-op. @: does not print to stdout.
-	@:
+# Make external shared library.
+%.so:
+	$(MAKE) -C $(dir $@)
 
-%.pb.cc.o: %.pb.cc
-	$(CC) -fPIC -c -o $@ $<
+%.cc.o: %.cc
+	$(CC) -c -o $@ $<
 
-%.so: $(BUILD_OBJECTS)
-	$(CC) -shared -o $@ $^
-
-%.a: $(BUILD_OBJECTS)
-	$(AR) $@ $^
+%.app: $(BUILD_OBJ) $(APP_DEPENDENCIES)
+	$(CC) -o $@ $^

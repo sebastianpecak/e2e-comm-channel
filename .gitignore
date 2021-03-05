@@ -1,5 +1,9 @@
+*.o
+*.app
+*.a
+*.so
+*.vpp.*
+*.test
 DEPENDENCIES/*
-INTERFACE/*.pb.*
-INTERFACE/*.so
-INTERFACE/*.a
-DOCUMENTATION/*.vpp.*
+INTERFACE/*.pb.cc
+INTERFACE/*.pb.h

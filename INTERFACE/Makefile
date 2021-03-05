@@ -1,5 +1,5 @@
 # Use common project's makefile tools.
-include common.mk
+include ../COMMON/common.mk
 
 # Library output name.
 OUTPUT_NAME = interface
@@ -7,6 +7,11 @@ OUTPUT_LIB_NAME = lib$(OUTPUT_NAME)
 
 # If some files should not be compiled - put them here.
 EXCLUDED_PROTO = AddNewUser.proto SendMessage.proto BaseMessage.proto ReceiveMessage.proto FileMessage.proto
+ALL_PROTO      = $(shell ls *.proto 2>/dev/null)
+BUILD_PROTO    = $(filter-out $(EXCLUDED_PROTO), $(ALL_PROTO))
+BUILD_SOURCES  = $(patsubst %.proto,%.pb.cc,$(BUILD_PROTO))
+BUILD_HEADERS  = $(patsubst %.proto,%.pb.h,$(BUILD_PROTO))
+BUILD_OBJECTS  = $(patsubst %.proto,%.pb.cc.o,$(BUILD_PROTO))
 
 # Do not remove intermediate files. 
 .PRECIOUS: %.pb.h %.pb.cc %.pb.cc.o
