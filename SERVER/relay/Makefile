@@ -7,7 +7,7 @@ INCLUDE_PATH = ../../INTERFACE
 INCLUDES = $(addprefix -I, $(INCLUDE_PATH))
 
 # Library output name.
-OUTPUT_NAME      = cli
+OUTPUT_NAME      = relaysvr
 OUTPUT_APP_NAME  = $(OUTPUT_NAME).bin
 OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 

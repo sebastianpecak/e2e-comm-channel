@@ -1,0 +1,17 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+import 'TargetMessage.proto';
+
+/*
+ * This message uses TargetMessage as it base information and
+ * adds server-generated unique id which then can be used to confirm reception
+ * of this message by target client.
+ */
+message ForwardTargetMessage
+{
+    string id         = 1;
+    TargetMessage msg = 2;
+}

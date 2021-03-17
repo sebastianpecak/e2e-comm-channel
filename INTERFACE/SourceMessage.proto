@@ -8,8 +8,14 @@ syntax = "proto3";
  * Message itself is encrypted using sender's private key.
  * That assures that only true sender of given id could send it.
  */
+//message SourceMessage
+//{
+//    string senderId = 1;
+//    bytes encMsg    = 2;
+//}
+
 message SourceMessage
 {
-    string senderId = 1;
-    bytes encMsg    = 2;
+    string sourceId = 1;
+    bytes signedMsg = 2;
 }

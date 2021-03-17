@@ -1,0 +1,10 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+message ConfirmDelivery
+{
+    string userId             = 1;
+    repeated string messageId = 2;
+}

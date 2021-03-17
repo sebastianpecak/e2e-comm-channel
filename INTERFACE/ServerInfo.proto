@@ -1,0 +1,14 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+/*
+ * This message provides server information.
+ * Needs to be completed.
+ */ 
+message ServerInfo
+{
+    string name    = 1;
+    string version = 2;
+}

@@ -1,0 +1,18 @@
+/*
+ * Use Protocol Buffer version 3.
+ */ 
+syntax = "proto3";
+
+import 'ForwardTargetMessage.proto';
+
+// This message is used to transfer all messages from server to client.
+message AllMessagesReply
+{
+    repeated ForwardTargetMessage messages = 1;
+}
+
+// This message is used to request all messages from server by client.
+message AllMessagesRequest
+{
+    string userId = 1;
+}

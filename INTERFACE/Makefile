@@ -1,12 +1,14 @@
 # Use common project's makefile tools.
 include ../COMMON/common.mk
 
+CCFLAGS = -g
+
 # Library output name.
 OUTPUT_NAME = interface
 OUTPUT_LIB_NAME = lib$(OUTPUT_NAME)
 
 # If some files should not be compiled - put them here.
-EXCLUDED_PROTO = AddNewUser.proto SendMessage.proto BaseMessage.proto ReceiveMessage.proto FileMessage.proto
+EXCLUDED_PROTO = AddNewUser.proto SendMessage.proto BaseMessage.proto ReceiveMessage.proto FileMessage.proto Hash.proto
 ALL_PROTO      = $(shell ls *.proto 2>/dev/null)
 BUILD_PROTO    = $(filter-out $(EXCLUDED_PROTO), $(ALL_PROTO))
 BUILD_SOURCES  = $(patsubst %.proto,%.pb.cc,$(BUILD_PROTO))
@@ -64,7 +66,11 @@ help:
 	@:
 
 %.pb.cc.o: %.pb.cc
-	$(CC) -fPIC -c -o $@ $<
+	$(CC) -fPIC -c -o $@ $< $(CCFLAGS)
+
+# Special rule that has complex dependency.
+AllMessages.pb.cc.o: AllMessages.pb.cc ForwardTargetMessage.pb.cc
+	$(CC) -fPIC -c -o $@ $< $(CCFLAGS)
 
 %.so: $(BUILD_OBJECTS)
 	$(CC) -shared -o $@ $^

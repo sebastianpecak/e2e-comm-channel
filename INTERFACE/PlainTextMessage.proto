@@ -6,7 +6,7 @@ syntax = "proto3";
 /*
  * Use existsing Hash data type.
  */
-import 'Hash.proto';
+//import 'Hash.proto';
 
 /*
  * This is the data structure that carriers plain text message.
@@ -14,5 +14,5 @@ import 'Hash.proto';
 message PlainTextMessage
 {
     string text  = 1;
-    Hash msgHash = 2;
+    //Hash msgHash = 2;
 }

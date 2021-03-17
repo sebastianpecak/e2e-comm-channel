@@ -1,5 +1,5 @@
 *.o
-*.app
+*.bin
 *.a
 *.so
 *.vpp.*
@@ -7,3 +7,5 @@
 DEPENDENCIES/*
 INTERFACE/*.pb.cc
 INTERFACE/*.pb.h
+.vscode/*
+*/.vscode/*

@@ -7,8 +7,9 @@ INCLUDE_PATH = ../../INTERFACE
 INCLUDES = $(addprefix -I, $(INCLUDE_PATH))
 
 # Library output name.
-OUTPUT_NAME      = cli
-OUTPUT_APP_NAME  = $(OUTPUT_NAME).bin
+APP_EXT          = bin
+OUTPUT_NAME      = enc-speed-cmp
+OUTPUT_APP_NAME  = $(OUTPUT_NAME).$(APP_EXT)
 OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 
 ALL_TEST_SRC      = $(shell ls *_test.cc 2>/dev/null)
@@ -79,5 +80,5 @@ debug_print:
 %.cc.o: %.cc
 	$(CC) -c -o $@ $< $(CCFLAGS) $(INCLUDES)
 
-%.bin: $(BUILD_OBJ) $(APP_DEPENDENCIES)
+%.$(APP_EXT): $(BUILD_OBJ) $(APP_DEPENDENCIES)
 	$(CC) -o $@ $^ $(LDFLAGS)
