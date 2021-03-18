@@ -7,10 +7,11 @@ syntax = "proto3";
 
 enum ServerRequestType
 {
-    GET_SVR_INFO     = 0; // For debug purposes. Get server information.
-    SEND_MSG         = 1; // Used to send new message to target user through relay server.
-    RECV_ALL_MSG     = 2; // Used to get all messages for given user from relay server.
-    CONFIRM_DELIVERY = 3; // Message type sent by client to server to confirm reception of given messages.
+    UNKOWN           = 0; // Needed to add this value as having get_svr_info=0 resulted in error in message serialization.
+    GET_SVR_INFO     = 1; // For debug purposes. Get server information.
+    SEND_MSG         = 2; // Used to send new message to target user through relay server.
+    RECV_ALL_MSG     = 3; // Used to get all messages for given user from relay server.
+    CONFIRM_DELIVERY = 4; // Message type sent by client to server to confirm reception of given messages.
 }
 
 enum ServerReplyCode

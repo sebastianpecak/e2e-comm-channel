@@ -12,10 +12,12 @@
 #include "SendMsgRequest.h"
 #include "RecvAllMsgRequest.h"
 #include "ConfirmDeliveryRequest.h"
+#include "GetSvrInfoRequest.h"
 
 
 Application::Application(int argc, char **argv)
 {
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
     _storage = new Storage();
 }
 
@@ -89,7 +91,9 @@ void Application::_ProcessRequest(const void *data, unsigned int msgSize, const 
     }
     else if (request.type() == ServerRequestType::GET_SVR_INFO)
     {
-        
+        GetSvrInfoRequest processor = GetSvrInfoRequest(_storage, request, peer);
+        processor.Process();
+        _SendReply(processor, cliSocket);
     }
     else if (request.type() == ServerRequestType::RECV_ALL_MSG)
     {

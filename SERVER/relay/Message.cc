@@ -2,7 +2,8 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/hex.h>
 
-Message::Message(const TargetMessage &tgtMsg)
+Message::Message(const TargetMessage &tgtMsg) :
+    _tgtMsg(tgtMsg)
 {
     using namespace CryptoPP;
     // Generate random id.
