@@ -21,24 +21,32 @@
 #include <netinet/in.h>
 #include <netinet/udp.h>
 #include <unistd.h>
+#include <termios.h>
 
 #define LOG_ERROR(message) \
     fprintf(stderr, "ERR: %s\n", (message))
 
 Application::Application(int argc, char **argv) :
     _config(),
-    _needToStop(false)
+    _needToStop(false),
+    _userKey(nullptr)
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     _config.ParseCliArguments(argc, argv);
 }
 
+Application::~Application()
+{
+    // Make sure to logout user.
+    _Logout("");
+}
+
 int Application::Run()
 {
-    std::cout << "Enter user name: ";
-    std::cin >> _userName;
-    std::cin.ignore();
-    _GenerateKeyIfNeeded(_userName);
+    //std::cout << "Enter user name: ";
+    //std::cin >> _userName;
+    //std::cin.ignore();
+    //_GenerateKeyIfNeeded(_userName);
     // TODO: user name should be hashed.
     while (not _needToStop)
     {
@@ -58,22 +66,40 @@ void Application::_GenerateKeyIfNeeded(const std::string &userId)
         std::cout << "User " << userId << " already has a key." << std::endl;
         return;
     }
+    using namespace CryptoPP;
     // Generate new key.
     //CryptoPP::AutoSeededRandomPool rng;
-    CryptoPP::RSA::PrivateKey newKey;
-    newKey.Initialize(rng, 2048);
+    RSA::PrivateKey newKey;
+    newKey.GenerateRandomWithKeySize(rng, 2048);
+
+    //ByteQueue savedKey;
+    std::string savedKey;
+    StringSink savedKeySink(savedKey);
+    newKey.Save(savedKeySink);
+
+    StringSource savedKeySource(savedKey, true);
+    RSA::PrivateKey newKey2;
+    newKey2.Load(savedKeySource);
+
+    if(newKey.GetModulus() != newKey2.GetModulus() ||
+        newKey.GetPublicExponent() != newKey2.GetPublicExponent() ||
+        newKey.GetPrivateExponent() != newKey2.GetPrivateExponent())
+    {
+        std::cerr << "Keys are different." << std::endl;
+    }
+    
     _keys[userId] = newKey;
 }
 
-CryptoPP::RSA::PrivateKey Application::_GetPrivateKey(const std::string &userId) const
-{
-    return _keys.find(userId)->second;
-}
+// CryptoPP::RSA::PrivateKey Application::_GetPrivateKey(const std::string &userId) const
+// {
+//     return _keys.find(userId)->second;
+// }
 
-CryptoPP::RSA::PublicKey Application::_GetPublicKey(const std::string &userId) const
-{
-    return CryptoPP::RSA::PublicKey(_keys.find(userId)->second);
-}
+// CryptoPP::RSA::PublicKey Application::_GetPublicKey(const std::string &userId) const
+// {
+//     return CryptoPP::RSA::PublicKey(_keys.find(userId)->second);
+// }
 
 void Application::_Initialize()
 {
@@ -93,7 +119,7 @@ void Application::_ProcessCommand(const std::string &command)
     {
         _Recv(command);
     }
-    else if (command.find("svrinfo") != std::string::npos)
+    else if (command.find("svr-info") != std::string::npos)
     {
         _SvrInfo(command);
     }
@@ -101,20 +127,134 @@ void Application::_ProcessCommand(const std::string &command)
     {
         _Exit(command);
     }
+    else if (command.find("login") != std::string::npos)
+    {
+        _Login(command);
+    }
+    else if (command.find("create-user") != std::string::npos)
+    {
+        _CreateUser(command);
+    }
+    else if (command.find("logout") != std::string::npos)
+    {
+        _Logout(command);
+    }
     else
     {
         std::cout << "Unkown command " << command << std::endl;
     }
 }
 
+void Application::_Logout(const std::string &command)
+{
+    if (_userKey != nullptr)
+    {
+        delete _userKey;
+        _userKey = nullptr;
+        std::cout << "User logged out." << std::endl;
+    }
+}
+
+void Application::_Login(const std::string &command)
+{
+    // Check if there is no user logged in.
+    if (_userKey != nullptr)
+    {
+        std::cerr << "Need to logout first." << std::endl;
+        return;
+    }
+    const auto separator = command.find(' ');
+    _userName = command.substr(separator + 1);
+    if (separator == std::string::npos || _userName.length() == 0)
+    {
+        std::cerr << "Missing user id for login command." << std::endl;
+        return;
+    }
+    // Check if user exists.
+    if (not _keyStore.UserExists(_userName))
+    {
+        std::cerr << "User '" << _userName << "' does not exist." << std::endl;
+        return;
+    }
+    std::string password;
+    std::cout << "Password: "; std::cout.flush();
+    _SetTerminalPasswordMode(true);
+    std::cin >> password;
+    std::cin.ignore();
+    _SetTerminalPasswordMode(false);
+    _userKey = _keyStore.GetDecryptedKey(_userName, password);
+    if (_userKey == nullptr)
+    {
+        _userName.clear();
+        std::cerr << std::endl << "Failed to login user. Probably invalid password." << std::endl;
+        return;
+    }
+    std::cout << "User successfully logged in." << std::endl;
+}
+
+void Application::_CreateUser(const std::string &command)
+{
+    const auto separator = command.find(' ');
+    const auto userId = command.substr(separator + 1);
+    if (separator == std::string::npos || userId.length() == 0)
+    {
+        std::cerr << "Missing user id for create command." << std::endl;
+        return;
+    }
+    _SetTerminalPasswordMode(true);
+    // ###############################3
+    // All such places must be zeroed on scope exist to no leave raw keys/pwds in memory.
+    // ###############################
+    std::string pwd, pwdAgain;
+    std::cout << "Password: "; std::cout.flush();
+    std::cin >> pwd;
+    std::cout << std::endl << "Again: "; std::cout.flush();
+    std::cin >> pwdAgain;
+    std::cin.ignore();
+    _SetTerminalPasswordMode(false);
+    // Check if both pwds are equal.
+    if (pwd != pwdAgain)
+    {
+        std::cerr << std::endl << "Passwords are not the same." << std::endl;
+        return;
+    }
+    _keyStore.CreateUser(userId, pwd);
+    std::cout << std::endl << "New user has been added." << std::endl;
+}
+
+void Application::_SetTerminalPasswordMode(bool enable)
+{
+    termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    if (enable)
+    {
+        tty.c_lflag &= ~ECHO;
+    }
+    else
+    {
+        tty.c_lflag |= ECHO;
+    }
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
 void Application::_Send(const std::string &command)
 {
+    if (_userKey == nullptr)
+    {
+        std::cerr << "You must login first." << std::endl;
+        return;
+    }
     // Get recipient id from command.
     const auto separator = command.find(' ');
     const auto recipient = command.substr(separator + 1);
     if (separator == std::string::npos || recipient.length() == 0)
     {
         std::cerr << "You must specify target id." << std::endl;
+        return;
+    }
+    if (not _keyStore.IsRecipientKnown(recipient))
+    {
+        std::cerr << "You do not have recipient's public key and cannot send message to them." << std::endl;
         return;
     }
     printf("Sending mesage to %s\n", recipient.c_str());
@@ -153,7 +293,7 @@ void Application::_Send(const std::string &command)
     const auto serializedPlainText = plainTextMessage.SerializeAsString();
 
     // Sign source message.
-    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Signer signer(_GetPrivateKey(_userName));
+    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Signer signer(*_userKey);
     std::string signature;
     CryptoPP::StringSource(
         (CryptoPP::byte*)serializedPlainText.data(), serializedPlainText.size(), true, 
@@ -165,7 +305,7 @@ void Application::_Send(const std::string &command)
     );
     // VERIFY !!!!!!!!!
     // Verify signature.
-    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(_GetPublicKey(_userName));
+    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(CryptoPP::RSA::PublicKey(*_userKey));
     const auto signedMsg = serializedPlainText + signature;
     std::string recovered;
     try
@@ -566,6 +706,6 @@ void Application::_DisplayHelp() const
     printf("    send recipient_id - send new message\n");
     printf("    recv              - receive all messages from server\n");
     printf("    help              - display all commands\n");
-    printf("    svrinfo           - get server name and version\n");
+    printf("    svr-info          - get server name and version\n");
     printf("    exit              - exit gracefully\n");
 }

@@ -6,6 +6,7 @@
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
 #include <unordered_map>
+#include "UserKeyStore.h"
 
 class Application
 {
@@ -33,6 +34,8 @@ private:
      */
     std::unordered_map<std::string, CryptoPP::RSA::PrivateKey> _keys;
     CryptoPP::AutoSeededRandomPool rng;
+    UserKeyStore _keyStore;
+    CryptoPP::RSA::PrivateKey *_userKey;
 
     void _Initialize();
     void _ProcessCommand(const std::string &command);
@@ -41,10 +44,15 @@ private:
     void _Recv(const std::string &command);
     void _SvrInfo(const std::string &command) const;
     void _Exit(const std::string &command);
+    void _Login(const std::string &command);
+    void _CreateUser(const std::string &command);
+    void _Logout(const std::string &command);
     void _GenerateKeyIfNeeded(const std::string &userId);
-    CryptoPP::RSA::PrivateKey _GetPrivateKey(const std::string &userId) const;
-    CryptoPP::RSA::PublicKey _GetPublicKey(const std::string &userId) const;
+    //CryptoPP::RSA::PrivateKey _GetPrivateKey(const std::string &userId) const;
+    //CryptoPP::RSA::PublicKey _GetPublicKey(const std::string &userId) const;
+    void _SetTerminalPasswordMode(bool enable);
 public:
+    ~Application();
     Application(int argc, char **argv);
     int Run();
 };

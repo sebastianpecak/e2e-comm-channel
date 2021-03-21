@@ -11,6 +11,7 @@ OUTPUT_NAME      = cli
 OUTPUT_APP_NAME  = $(OUTPUT_NAME).bin
 OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 
+# Main sources.
 ALL_TEST_SRC      = $(shell ls *_test.cc 2>/dev/null)
 BUILD_TEST_OBJ    = $(patsubst %.cc,%.cc.o, $(ALL_TEST_SRC))
 EXCLUDED_CC_SRC   = $(ALL_TEST_SRC)
@@ -22,8 +23,17 @@ BUILD_OBJ_NO_MAIN = $(filter-out main.cc.o, $(BUILD_OBJ))
 APP_DEPENDENCIES  = ../../INTERFACE/libinterface.a ../../DEPENDENCIES/protobuf/src/.libs/libprotobuf.a /usr/local/lib/libcryptopp.a
 TEST_DEPENDENCIES = /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a
 
+# Auto generated sources.
+# If some files should not be compiled - put them here.
+EXCLUDED_PROTO 		= 
+ALL_PROTO      		= $(shell ls *.proto 2>/dev/null)
+BUILD_PROTO    		= $(filter-out $(EXCLUDED_PROTO), $(ALL_PROTO))
+BUILD_SOURCES_PROTO = $(patsubst %.proto,%.pb.cc,$(BUILD_PROTO))
+BUILD_HEADERS_PROTO = $(patsubst %.proto,%.pb.h,$(BUILD_PROTO))
+BUILD_OBJECTS_PROTO = $(patsubst %.proto,%.pb.cc.o,$(BUILD_PROTO))
+
 # Do not remove intermediate files. 
-.PRECIOUS: %.cc.o %.a %.so
+.PRECIOUS: %.cc.o %.a %.so %.pb.h %.pb.cc %.pb.cc.o
 
 # Main target. Build interface library.
 main: $(OUTPUT_APP_NAME)
@@ -33,6 +43,8 @@ main: $(OUTPUT_APP_NAME)
 clean:
 	@$(RM) *.cc.o
 	@$(RM) $(OUTPUT_APP_NAME)
+	@$(RM) *.pb.h
+	@$(RM) *.pb.cc
 
 # Install built library in target location.
 install:
@@ -50,23 +62,47 @@ $(OUTPUT_TEST_NAME): $(BUILD_OBJ_NO_MAIN) $(BUILD_TEST_OBJ) $(TEST_DEPENDENCIES)
 # Helper target to print all Makefile's variables.
 debug_print:
 	@echo "All variables:"
-	@echo "    OUTPUT_NAME      : $(OUTPUT_NAME)"
-	@echo "    OUTPUT_APP_NAME  : $(OUTPUT_APP_NAME)"
-	@echo "    OUTPUT_TEST_NAME : $(OUTPUT_TEST_NAME)"
-	@echo "    ALL_TEST_SRC     : $(ALL_TEST_SRC)"
-	@echo "    BUILD_TEST_OBJ   : $(BUILD_TEST_OBJ)"
-	@echo "    EXCLUDED_CC_SRC  : $(EXCLUDED_CC_SRC)"
-	@echo "    ALL_CC_SRC       : $(ALL_CC_SRC)"
-	@echo "    BUILD_CC_SRC     : $(BUILD_CC_SRC)"
-	@echo "    BUILD_OBJ        : $(BUILD_OBJ)"
-	@echo "    BUILD_OBJ_NO_MAIN: $(BUILD_OBJ_NO_MAIN)"
-	@echo "    APP_DEPENDENCIES : $(APP_DEPENDENCIES)"
-	@echo "    TEST_DEPENDENCIES: $(TEST_DEPENDENCIES)"
-	@echo "    RM               : $(RM)"
-	@echo "    PBC              : $(PBC)"
-	@echo "    C                : $(C)"
-	@echo "    CC               : $(CC)"
-	@echo "    AR               : $(AR)"
+	@echo "    OUTPUT_NAME        : $(OUTPUT_NAME)"
+	@echo "    OUTPUT_APP_NAME    : $(OUTPUT_APP_NAME)"
+	@echo "    OUTPUT_TEST_NAME   : $(OUTPUT_TEST_NAME)"
+	@echo "    ALL_TEST_SRC       : $(ALL_TEST_SRC)"
+	@echo "    BUILD_TEST_OBJ     : $(BUILD_TEST_OBJ)"
+	@echo "    EXCLUDED_CC_SRC    : $(EXCLUDED_CC_SRC)"
+	@echo "    ALL_CC_SRC         : $(ALL_CC_SRC)"
+	@echo "    BUILD_CC_SRC       : $(BUILD_CC_SRC)"
+	@echo "    BUILD_OBJ          : $(BUILD_OBJ)"
+	@echo "    BUILD_OBJ_NO_MAIN  : $(BUILD_OBJ_NO_MAIN)"
+	@echo "    APP_DEPENDENCIES   : $(APP_DEPENDENCIES)"
+	@echo "    TEST_DEPENDENCIES  : $(TEST_DEPENDENCIES)"
+	@echo "    EXCLUDED_PROTO	  : $(EXCLUDED_PROTO)"
+	@echo "    ALL_PROTO		  : $(ALL_PROTO)"
+	@echo "    BUILD_PROTO		  : $(BUILD_PROTO)"
+	@echo "    BUILD_SOURCES_PROTO: $(BUILD_SOURCES_PROTO)"
+	@echo "    BUILD_HEADERS_PROTO: $(BUILD_HEADERS_PROTO)"
+	@echo "    BUILD_OBJECTS_PROTO: $(BUILD_OBJECTS_PROTO)"
+	@echo "    RM                 : $(RM)"
+	@echo "    PBC                : $(PBC)"
+	@echo "    C                  : $(C)"
+	@echo "    CC                 : $(CC)"
+	@echo "    AR                 : $(AR)"
+
+compile_proto: $(BUILD_SOURCES_PROTO)
+	@echo "$@: Done."
+
+%.pb.h: %.proto
+	$(PBC) --cpp_out=. $<
+
+%.pb.cc: %.pb.h
+# Empty rule. Just proxy to have both cc and h as target dependencies.
+# : is bash no-op. @: does not print to stdout.
+	@:
+
+%.pb.cc.o: %.pb.cc
+	$(CC) -c -o $@ $< $(CCFLAGS)
+
+# Special rule that has complex dependency.
+DbApp.pb.cc.o: DbApp.pb.cc DbAppRecord.pb.cc
+	$(CC) -c -o $@ $< $(CCFLAGS)
 
 # Make external static library.
 %.a:
@@ -79,5 +115,5 @@ debug_print:
 %.cc.o: %.cc
 	$(CC) -c -o $@ $< $(CCFLAGS) $(INCLUDES)
 
-%.bin: $(BUILD_OBJ) $(APP_DEPENDENCIES)
+%.bin: $(BUILD_OBJ) $(APP_DEPENDENCIES) $(BUILD_OBJECTS_PROTO)
 	$(CC) -o $@ $^ $(LDFLAGS)
