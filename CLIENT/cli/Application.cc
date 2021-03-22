@@ -58,38 +58,38 @@ int Application::Run()
     return 0;
 }
 
-void Application::_GenerateKeyIfNeeded(const std::string &userId)
-{
-    // Do not generate new key if one already exists.
-    if (_keys.find(userId) != _keys.end())
-    {
-        std::cout << "User " << userId << " already has a key." << std::endl;
-        return;
-    }
-    using namespace CryptoPP;
-    // Generate new key.
-    //CryptoPP::AutoSeededRandomPool rng;
-    RSA::PrivateKey newKey;
-    newKey.GenerateRandomWithKeySize(rng, 2048);
+// void Application::_GenerateKeyIfNeeded(const std::string &userId)
+// {
+//     // Do not generate new key if one already exists.
+//     if (_keys.find(userId) != _keys.end())
+//     {
+//         std::cout << "User " << userId << " already has a key." << std::endl;
+//         return;
+//     }
+//     using namespace CryptoPP;
+//     // Generate new key.
+//     //CryptoPP::AutoSeededRandomPool rng;
+//     RSA::PrivateKey newKey;
+//     newKey.GenerateRandomWithKeySize(rng, 2048);
 
-    //ByteQueue savedKey;
-    std::string savedKey;
-    StringSink savedKeySink(savedKey);
-    newKey.Save(savedKeySink);
+//     //ByteQueue savedKey;
+//     std::string savedKey;
+//     StringSink savedKeySink(savedKey);
+//     newKey.Save(savedKeySink);
 
-    StringSource savedKeySource(savedKey, true);
-    RSA::PrivateKey newKey2;
-    newKey2.Load(savedKeySource);
+//     StringSource savedKeySource(savedKey, true);
+//     RSA::PrivateKey newKey2;
+//     newKey2.Load(savedKeySource);
 
-    if(newKey.GetModulus() != newKey2.GetModulus() ||
-        newKey.GetPublicExponent() != newKey2.GetPublicExponent() ||
-        newKey.GetPrivateExponent() != newKey2.GetPrivateExponent())
-    {
-        std::cerr << "Keys are different." << std::endl;
-    }
+//     if(newKey.GetModulus() != newKey2.GetModulus() ||
+//         newKey.GetPublicExponent() != newKey2.GetPublicExponent() ||
+//         newKey.GetPrivateExponent() != newKey2.GetPrivateExponent())
+//     {
+//         std::cerr << "Keys are different." << std::endl;
+//     }
     
-    _keys[userId] = newKey;
-}
+//     _keys[userId] = newKey;
+// }
 
 // CryptoPP::RSA::PrivateKey Application::_GetPrivateKey(const std::string &userId) const
 // {
@@ -147,12 +147,8 @@ void Application::_ProcessCommand(const std::string &command)
 
 void Application::_Logout(const std::string &command)
 {
-    if (_userKey != nullptr)
-    {
-        delete _userKey;
-        _userKey = nullptr;
-        std::cout << "User logged out." << std::endl;
-    }
+    _userKey.reset();
+    std::cout << "User logged out." << std::endl;
 }
 
 void Application::_Login(const std::string &command)
@@ -171,7 +167,7 @@ void Application::_Login(const std::string &command)
         return;
     }
     // Check if user exists.
-    if (not _keyStore.UserExists(_userName))
+    if (not _keyStore.IsUserLoggable(_userName))
     {
         std::cerr << "User '" << _userName << "' does not exist." << std::endl;
         return;
@@ -182,7 +178,7 @@ void Application::_Login(const std::string &command)
     std::cin >> password;
     std::cin.ignore();
     _SetTerminalPasswordMode(false);
-    _userKey = _keyStore.GetDecryptedKey(_userName, password);
+    _userKey = _keyStore.GetPrivateKey(_userName, password);
     if (_userKey == nullptr)
     {
         _userName.clear();
@@ -252,7 +248,7 @@ void Application::_Send(const std::string &command)
         std::cerr << "You must specify target id." << std::endl;
         return;
     }
-    if (not _keyStore.IsRecipientKnown(recipient))
+    if (not _keyStore.IsUserKnown(recipient))
     {
         std::cerr << "You do not have recipient's public key and cannot send message to them." << std::endl;
         return;
@@ -305,7 +301,8 @@ void Application::_Send(const std::string &command)
     );
     // VERIFY !!!!!!!!!
     // Verify signature.
-    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(CryptoPP::RSA::PublicKey(*_userKey));
+    CryptoPP::RSA::PublicKey pubKey(*_userKey);
+    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(pubKey);
     const auto signedMsg = serializedPlainText + signature;
     std::string recovered;
     try
@@ -384,10 +381,10 @@ void Application::_Send(const std::string &command)
     //CryptoPP::RSA::PrivateKey targetPrivateKey;
     //targetPrivateKey.Initialize(rng, 2048);
     //CryptoPP::RSA::PublicKey targetPublicKey(targetPrivateKey);
-    _GenerateKeyIfNeeded(recipient);
+    //_GenerateKeyIfNeeded(recipient);
 
     // Encrypt AES key with target's public key.
-    CryptoPP::RSAES_OAEP_SHA_Encryptor aesKeyEncryptor(_GetPublicKey(recipient));
+    CryptoPP::RSAES_OAEP_SHA_Encryptor aesKeyEncryptor(_keyStore.GetPublicKey(recipient)); //_GetPublicKey(recipient));
     std::string encSymetricKey;
     CryptoPP::StringSource(
         aesKey.data(), aesKey.size(), true,
@@ -402,7 +399,8 @@ void Application::_Send(const std::string &command)
 
     // VERIFY !!!!!!!!!
     // Decrypt.
-    CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(_GetPrivateKey(recipient));
+    /* DEBUG ONLY */const auto recipientPrivKey = _keyStore.GetPrivateKey(recipient, "zaq1@WSX");
+    CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(*recipientPrivKey);//_GetPrivateKey(recipient));
     std::string decSymetricKey;
     CryptoPP::StringSource(
         (CryptoPP::byte*)encSymetricKey.data(), encSymetricKey.size(), true,
@@ -551,7 +549,7 @@ void Application::_Recv(const std::string &command)
             printf("NEW: Received message of ID %s\n", ftg.id().c_str());
             confirmMsg.add_messageid(ftg.id());
             // Decrypt symetric key.
-            CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(_GetPrivateKey(_userName));
+            CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(*_userKey);// _GetPrivateKey(_userName));
             std::string aesKey;
             CryptoPP::StringSource(
                 (CryptoPP::byte*)ftg.msg().encsymetrickey().data(), ftg.msg().encsymetrickey().size(), true,
@@ -577,7 +575,7 @@ void Application::_Recv(const std::string &command)
                 continue;
             }
             // Verify signature.
-            CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(_GetPublicKey(srcMsg.sourceid()));
+            CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(_keyStore.GetPublicKey(srcMsg.sourceid()));// _GetPublicKey(srcMsg.sourceid()));
             std::string serializedMsg;
             try
             {

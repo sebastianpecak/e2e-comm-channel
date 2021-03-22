@@ -7,5 +7,7 @@
 DEPENDENCIES/*
 INTERFACE/*.pb.cc
 INTERFACE/*.pb.h
+CLIENT/cli/*.pb.cc
+CLIENT/cli/*.pb.h
 .vscode/*
 */.vscode/*

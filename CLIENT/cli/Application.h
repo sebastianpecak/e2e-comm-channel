@@ -5,7 +5,7 @@
 #include "Configuration.h"
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
-#include <unordered_map>
+//#include <unordered_map>
 #include "UserKeyStore.h"
 
 class Application
@@ -32,10 +32,10 @@ private:
     /**
      * This is temporary store which maps user name to RSA key.
      */
-    std::unordered_map<std::string, CryptoPP::RSA::PrivateKey> _keys;
+    //std::unordered_map<std::string, CryptoPP::RSA::PrivateKey> _keys;
     CryptoPP::AutoSeededRandomPool rng;
     UserKeyStore _keyStore;
-    CryptoPP::RSA::PrivateKey *_userKey;
+    std::unique_ptr<CryptoPP::RSA::PrivateKey> _userKey;
 
     void _Initialize();
     void _ProcessCommand(const std::string &command);
@@ -47,7 +47,7 @@ private:
     void _Login(const std::string &command);
     void _CreateUser(const std::string &command);
     void _Logout(const std::string &command);
-    void _GenerateKeyIfNeeded(const std::string &userId);
+    //void _GenerateKeyIfNeeded(const std::string &userId);
     //CryptoPP::RSA::PrivateKey _GetPrivateKey(const std::string &userId) const;
     //CryptoPP::RSA::PublicKey _GetPublicKey(const std::string &userId) const;
     void _SetTerminalPasswordMode(bool enable);

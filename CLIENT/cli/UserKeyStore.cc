@@ -31,7 +31,7 @@ UserKeyStore::~UserKeyStore()
     _db.SerializeToOstream(new std::ofstream(DB_FILE_NAME, std::ios::out | std::ios::binary));
 }
 
-bool UserKeyStore::UserExists(const std::string &userId)
+bool UserKeyStore::IsUserLoggable(const std::string &userId)
 {
     // Find user in loaded database by id.
     for (int i = 0; i < _db.records_size(); ++i)
@@ -46,7 +46,22 @@ bool UserKeyStore::UserExists(const std::string &userId)
     return false;
 }
 
-CryptoPP::RSA::PrivateKey* UserKeyStore::GetDecryptedKey(const std::string &userId, const std::string &pwd)
+bool UserKeyStore::IsUserKnown(const std::string &userId)
+{
+    // Find user in loaded database by id.
+    for (int i = 0; i < _db.records_size(); ++i)
+    {
+        // If we found user.
+        if (_db.records(i).userid() == userId)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::GetPrivateKey(const std::string &userId, const std::string &pwd)
 {
     // Find user in loaded database by id.
     for (int i = 0; i < _db.records_size(); ++i)
@@ -61,7 +76,7 @@ CryptoPP::RSA::PrivateKey* UserKeyStore::GetDecryptedKey(const std::string &user
     return nullptr;
 }
 
-CryptoPP::RSA::PrivateKey* UserKeyStore::_DecryptKey(const std::string &encKeyBytes, const std::string &pwd)
+std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::_DecryptKey(const std::string &encKeyBytes, const std::string &pwd)
 {
     using namespace CryptoPP;
 
@@ -91,7 +106,7 @@ CryptoPP::RSA::PrivateKey* UserKeyStore::_DecryptKey(const std::string &encKeyBy
     }
     // Make private key.
     StringSource decPrivKeySrc(decPrivKey, true);
-    RSA::PrivateKey *key = new RSA::PrivateKey();
+    std::unique_ptr<RSA::PrivateKey> key = std::make_unique<RSA::PrivateKey>();
     key->Load(decPrivKeySrc);
     return key;
 }
@@ -127,4 +142,25 @@ void UserKeyStore::CreateUser(const std::string &userId, const std::string &pwd)
             new StringSink(*newRecord->mutable_privatekey())
         )
     );
+}
+
+CryptoPP::RSA::PublicKey UserKeyStore::GetPublicKey(const std::string &userId)
+{
+    // Find user in loaded database by id.
+    for (int i = 0; i < _db.records_size(); ++i)
+    {
+        // If we found user.
+        if (_db.records(i).userid() == userId)
+        {
+            // Deserialize and return public key.
+            CryptoPP::RSA::PublicKey key;
+            CryptoPP::StringSource keySource(_db.records(i).publickey(), true);
+            key.Load(keySource);
+            return key;
+        }
+    }
+
+    // Should never happen.
+    // Call IsUserKnown before calling GetPublicKey.
+    return CryptoPP::RSA::PublicKey();
 }
