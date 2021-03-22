@@ -48,6 +48,17 @@ public:
      * Returns user's public key.
      */
     CryptoPP::RSA::PublicKey GetPublicKey(const std::string &userId);
+    /**
+     * Precondition: user must be known - use IsUserKnown.
+     * This method is used to export user's public key.
+     * Output is string in compact-record fromat.
+     */
+    std::string ExportCompactRecord(const std::string &userId);
+    /**
+     * This function imports user's public key from compact-record.
+     * Returns true on success.
+     */
+    bool ImportCompactRecord(const std::string &compactRecord);
 };
 
 #endif // USERKEYSTORE_H

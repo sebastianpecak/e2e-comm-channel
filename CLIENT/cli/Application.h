@@ -47,10 +47,14 @@ private:
     void _Login(const std::string &command);
     void _CreateUser(const std::string &command);
     void _Logout(const std::string &command);
+    void _ExportUser(const std::string &command);
+    void _ImportUser(const std::string &command);
     //void _GenerateKeyIfNeeded(const std::string &userId);
     //CryptoPP::RSA::PrivateKey _GetPrivateKey(const std::string &userId) const;
     //CryptoPP::RSA::PublicKey _GetPublicKey(const std::string &userId) const;
     void _SetTerminalPasswordMode(bool enable);
+    void _Log(const std::string &msg) const;
+    void _Err(const std::string &msg) const;
 public:
     ~Application();
     Application(int argc, char **argv);

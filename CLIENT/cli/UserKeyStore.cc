@@ -4,6 +4,7 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/default.h>
 #include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 #include <fstream>
 
 #define DB_FILE_NAME "cli.storage"
@@ -163,4 +164,61 @@ CryptoPP::RSA::PublicKey UserKeyStore::GetPublicKey(const std::string &userId)
     // Should never happen.
     // Call IsUserKnown before calling GetPublicKey.
     return CryptoPP::RSA::PublicKey();
+}
+
+std::string UserKeyStore::ExportCompactRecord(const std::string &userId)
+{
+    using namespace CryptoPP;
+
+    std::string rawPublicKey;
+    // Find user in loaded database by id.
+    for (int i = 0; i < _db.records_size(); ++i)
+    {
+        // If we found user.
+        if (_db.records(i).userid() == userId)
+        {
+            rawPublicKey = _db.records(i).publickey();
+        }
+    }
+    const auto rawData = userId + '-' + rawPublicKey;
+    std::string compactRecord;
+    StringSource(
+        rawData,
+        true,
+        new HexEncoder(
+            new StringSink(compactRecord)
+        )
+    );
+    return compactRecord;
+}
+
+bool UserKeyStore::ImportCompactRecord(const std::string &compactRecord)
+{
+    using namespace CryptoPP;
+
+    // Convert to raw string.
+    std::string rawCompactRecord;
+    StringSource(
+        compactRecord,
+        true,
+        new HexDecoder(
+            new StringSink(rawCompactRecord)
+        )
+    );
+    // Find separator.
+    const auto separator = rawCompactRecord.find('-');
+    if (separator == std::string::npos)
+    {
+        return false;
+    }
+    const auto userId       = rawCompactRecord.substr(0, separator);
+    if (IsUserKnown(userId))
+    {
+        return false;
+    }
+    const auto rawPublicKey = rawCompactRecord.substr(separator + 1);
+    AppDbRecord *newRecord = _db.add_records();
+    newRecord->set_userid(userId);
+    newRecord->set_publickey(rawPublicKey);
+    return true;
 }

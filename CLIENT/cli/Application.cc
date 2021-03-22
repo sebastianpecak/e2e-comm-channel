@@ -51,7 +51,7 @@ int Application::Run()
     while (not _needToStop)
     {
         std::string command;
-        printf("$> ");
+        printf("%s:~$ ", _userName.c_str());
         std::getline(std::cin, command);
         _ProcessCommand(command);
     }
@@ -105,6 +105,14 @@ void Application::_Initialize()
 {
 }
 
+void Application::_Log(const std::string &msg) const
+{
+}
+
+void Application::_Err(const std::string &msg) const
+{
+}
+
 void Application::_ProcessCommand(const std::string &command)
 {
     if (command.find("help") != std::string::npos)
@@ -135,6 +143,14 @@ void Application::_ProcessCommand(const std::string &command)
     {
         _CreateUser(command);
     }
+    else if (command.find("export-user") != std::string::npos)
+    {
+        _ExportUser(command);
+    }
+    else if (command.find("import-user") != std::string::npos)
+    {
+        _ImportUser(command);
+    }
     else if (command.find("logout") != std::string::npos)
     {
         _Logout(command);
@@ -145,10 +161,51 @@ void Application::_ProcessCommand(const std::string &command)
     }
 }
 
+void Application::_ExportUser(const std::string &command)
+{
+    const auto separator = command.find(' ');
+    const auto userId = command.substr(separator + 1);
+    if (separator == std::string::npos || userId.length() == 0)
+    {
+        std::cerr << "You must specify target id." << std::endl;
+        return;
+    }
+    if (not _keyStore.IsUserKnown(userId))
+    {
+        std::cerr << "There is no such user." << std::endl;
+        return;
+    }
+    std::cout << "COMPACT-RECORD: " << _keyStore.ExportCompactRecord(userId) << std::endl;
+}
+
+void Application::_ImportUser(const std::string &command)
+{
+    const auto separator = command.find(' ');
+    const auto compactRecord = command.substr(separator + 1);
+    if (separator == std::string::npos || compactRecord.length() == 0)
+    {
+        std::cerr << "Missing compact-record value." << std::endl;
+        return;
+    }
+    if (not _keyStore.ImportCompactRecord(compactRecord))
+    {
+        std::cerr << "Failed to import user from compact-record." << std::endl;
+        return;
+    }
+}
+
 void Application::_Logout(const std::string &command)
 {
-    _userKey.reset();
-    std::cout << "User logged out." << std::endl;
+    if (_userKey != nullptr)
+    {
+        _userName.clear();
+        _userKey.reset();
+        std::cout << "User logged out." << std::endl;
+    }
+    else
+    {
+        std::cout << "No user was logged in." << std::endl;
+    }
 }
 
 void Application::_Login(const std::string &command)
@@ -163,13 +220,15 @@ void Application::_Login(const std::string &command)
     _userName = command.substr(separator + 1);
     if (separator == std::string::npos || _userName.length() == 0)
     {
+        _userName.clear();
         std::cerr << "Missing user id for login command." << std::endl;
         return;
     }
     // Check if user exists.
     if (not _keyStore.IsUserLoggable(_userName))
     {
-        std::cerr << "User '" << _userName << "' does not exist." << std::endl;
+        _userName.clear();
+        std::cerr << "This user does not allow login." << std::endl;
         return;
     }
     std::string password;
@@ -185,7 +244,7 @@ void Application::_Login(const std::string &command)
         std::cerr << std::endl << "Failed to login user. Probably invalid password." << std::endl;
         return;
     }
-    std::cout << "User successfully logged in." << std::endl;
+    std::cout << std::endl << "User successfully logged in." << std::endl;
 }
 
 void Application::_CreateUser(const std::string &command)
@@ -195,6 +254,11 @@ void Application::_CreateUser(const std::string &command)
     if (separator == std::string::npos || userId.length() == 0)
     {
         std::cerr << "Missing user id for create command." << std::endl;
+        return;
+    }
+    if (_keyStore.IsUserKnown(userId))
+    {
+        std::cerr << "This user already exists." << std::endl;
         return;
     }
     _SetTerminalPasswordMode(true);
@@ -399,23 +463,23 @@ void Application::_Send(const std::string &command)
 
     // VERIFY !!!!!!!!!
     // Decrypt.
-    /* DEBUG ONLY */const auto recipientPrivKey = _keyStore.GetPrivateKey(recipient, "zaq1@WSX");
-    CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(*recipientPrivKey);//_GetPrivateKey(recipient));
-    std::string decSymetricKey;
-    CryptoPP::StringSource(
-        (CryptoPP::byte*)encSymetricKey.data(), encSymetricKey.size(), true,
-        //new CryptoPP::HexDecoder(
-        new CryptoPP::PK_DecryptorFilter(
-            rng,
-            aesKeyDecryptor,
-            new CryptoPP::StringSink(decSymetricKey)
-        )
-        //)
-    );
-    if (memcmp(aesKey.data(), decSymetricKey.data(), aesKey.size()) != 0)
-    {
-        std::cerr << "INVALID" << std::endl;
-    }
+    /* DEBUG ONLY *///const auto recipientPrivKey = _keyStore.GetPrivateKey(recipient, "zaq1@WSX");
+    // CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(*recipientPrivKey);//_GetPrivateKey(recipient));
+    // std::string decSymetricKey;
+    // CryptoPP::StringSource(
+    //     (CryptoPP::byte*)encSymetricKey.data(), encSymetricKey.size(), true,
+    //     //new CryptoPP::HexDecoder(
+    //     new CryptoPP::PK_DecryptorFilter(
+    //         rng,
+    //         aesKeyDecryptor,
+    //         new CryptoPP::StringSink(decSymetricKey)
+    //     )
+    //     //)
+    // );
+    // if (memcmp(aesKey.data(), decSymetricKey.data(), aesKey.size()) != 0)
+    // {
+    //     std::cerr << "INVALID" << std::endl;
+    // }
     // VERIFY !!!!!!!!!
 
     // Make target message.
@@ -479,6 +543,11 @@ void Application::_Send(const std::string &command)
 
 void Application::_Recv(const std::string &command)
 {
+    if (_userKey == nullptr)
+    {
+        std::cerr << "You must login first." << std::endl;
+        return;
+    }
     printf("Receiving mesage for %s\n", _userName.c_str());
     // Make server interface message.
     ServerRequest request;
@@ -700,10 +769,15 @@ void Application::_Exit(const std::string &command)
 
 void Application::_DisplayHelp() const
 {
-    printf("Options:\n");
-    printf("    send recipient_id - send new message\n");
-    printf("    recv              - receive all messages from server\n");
-    printf("    help              - display all commands\n");
-    printf("    svr-info          - get server name and version\n");
-    printf("    exit              - exit gracefully\n");
+    printf("Commands list:\n");
+    printf("    login <user-id>              - Start new session as given user.\n");
+    printf("    logout                       - End current user's session.\n");
+    printf("    create-user <user-id>        - Create new user with gievn user-id.\n");
+    printf("    export-user <user-id>        - Exports user's public key.\n");
+    printf("    import-user <compact-record> - Imports user from compact-record.\n");
+    printf("    send <user-id>               - Send new message to user-id.\n");
+    printf("    recv                         - Get all current user's messages from server.\n");
+    printf("    svr-info                     - Get server name and version.\n");
+    printf("    help                         - Display commands list.\n");
+    printf("    exit                         - Logout and exit gracefully.\n");
 }
