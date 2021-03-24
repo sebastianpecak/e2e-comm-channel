@@ -3,8 +3,21 @@
  */ 
 syntax = "proto3";
 
-message ConfirmDelivery
+//message ConfirmDelivery
+//{
+//    string userId             = 1;
+//    repeated string messageId = 2;
+//}
+
+enum DeliveryStatus
 {
-    string userId             = 1;
-    repeated string messageId = 2;
+    UNKNOWN = 0;
+    MSG_OK  = 1;
+    MSG_NOK = 2;
+}
+
+message DeliveryResult
+{
+    string userId                         = 1;
+    map<string, DeliveryStatus> msgStatus = 2;
 }

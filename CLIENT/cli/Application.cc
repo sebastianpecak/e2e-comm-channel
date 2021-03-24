@@ -23,13 +23,14 @@
 #include <unistd.h>
 #include <termios.h>
 
+#include "SafeString.h"
+
 #define LOG_ERROR(message) \
     fprintf(stderr, "ERR: %s\n", (message))
 
 Application::Application(int argc, char **argv) :
     _config(),
-    _needToStop(false),
-    _userKey(nullptr)
+    _needToStop(false)
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     _config.ParseCliArguments(argc, argv);
@@ -58,58 +59,7 @@ int Application::Run()
     return 0;
 }
 
-// void Application::_GenerateKeyIfNeeded(const std::string &userId)
-// {
-//     // Do not generate new key if one already exists.
-//     if (_keys.find(userId) != _keys.end())
-//     {
-//         std::cout << "User " << userId << " already has a key." << std::endl;
-//         return;
-//     }
-//     using namespace CryptoPP;
-//     // Generate new key.
-//     //CryptoPP::AutoSeededRandomPool rng;
-//     RSA::PrivateKey newKey;
-//     newKey.GenerateRandomWithKeySize(rng, 2048);
-
-//     //ByteQueue savedKey;
-//     std::string savedKey;
-//     StringSink savedKeySink(savedKey);
-//     newKey.Save(savedKeySink);
-
-//     StringSource savedKeySource(savedKey, true);
-//     RSA::PrivateKey newKey2;
-//     newKey2.Load(savedKeySource);
-
-//     if(newKey.GetModulus() != newKey2.GetModulus() ||
-//         newKey.GetPublicExponent() != newKey2.GetPublicExponent() ||
-//         newKey.GetPrivateExponent() != newKey2.GetPrivateExponent())
-//     {
-//         std::cerr << "Keys are different." << std::endl;
-//     }
-    
-//     _keys[userId] = newKey;
-// }
-
-// CryptoPP::RSA::PrivateKey Application::_GetPrivateKey(const std::string &userId) const
-// {
-//     return _keys.find(userId)->second;
-// }
-
-// CryptoPP::RSA::PublicKey Application::_GetPublicKey(const std::string &userId) const
-// {
-//     return CryptoPP::RSA::PublicKey(_keys.find(userId)->second);
-// }
-
 void Application::_Initialize()
-{
-}
-
-void Application::_Log(const std::string &msg) const
-{
-}
-
-void Application::_Err(const std::string &msg) const
 {
 }
 
@@ -208,6 +158,9 @@ void Application::_Logout(const std::string &command)
     }
 }
 
+
+
+
 void Application::_Login(const std::string &command)
 {
     // Check if there is no user logged in.
@@ -231,10 +184,11 @@ void Application::_Login(const std::string &command)
         std::cerr << "This user does not allow login." << std::endl;
         return;
     }
-    std::string password;
+    SafeString password;
+    //std::string password;
     std::cout << "Password: "; std::cout.flush();
     _SetTerminalPasswordMode(true);
-    std::cin >> password;
+    std::cin >> password.str();
     std::cin.ignore();
     _SetTerminalPasswordMode(false);
     _userKey = _keyStore.GetPrivateKey(_userName, password);
@@ -265,15 +219,16 @@ void Application::_CreateUser(const std::string &command)
     // ###############################3
     // All such places must be zeroed on scope exist to no leave raw keys/pwds in memory.
     // ###############################
-    std::string pwd, pwdAgain;
+    //std::string pwd, pwdAgain;
+    SafeString pwd, pwdAgain;
     std::cout << "Password: "; std::cout.flush();
-    std::cin >> pwd;
+    std::cin >> pwd.str();
     std::cout << std::endl << "Again: "; std::cout.flush();
-    std::cin >> pwdAgain;
+    std::cin >> pwdAgain.str();
     std::cin.ignore();
     _SetTerminalPasswordMode(false);
     // Check if both pwds are equal.
-    if (pwd != pwdAgain)
+    if (pwd.str() != pwdAgain.str())
     {
         std::cerr << std::endl << "Passwords are not the same." << std::endl;
         return;
@@ -365,39 +320,39 @@ void Application::_Send(const std::string &command)
     );
     // VERIFY !!!!!!!!!
     // Verify signature.
-    CryptoPP::RSA::PublicKey pubKey(*_userKey);
-    CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(pubKey);
+    // CryptoPP::RSA::PublicKey pubKey(*_userKey);
+    // CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(pubKey);
     const auto signedMsg = serializedPlainText + signature;
-    std::string recovered;
-    try
-    {
-        CryptoPP::StringSource(
-            (CryptoPP::byte*)signedMsg.data(), signedMsg.size(), true,
-            new CryptoPP::SignatureVerificationFilter(
-                verifier,
-                new CryptoPP::StringSink(recovered),
-                CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION |
-                CryptoPP::SignatureVerificationFilter::PUT_MESSAGE
-            )
-        );
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << "EXCEPTION: " <<  e.what() << std::endl;
-        return;
-    }
-    // Deserialize message and compare with original.
-    PlainTextMessage ptmVerify;
-    if (not ptmVerify.ParseFromString(recovered))
-    {
-        std::cerr << "Failed to parse PlainTextMessage." << std::endl;
-        return;
-    }
-    if (ptmVerify.text() != plainTextMessage.text())
-    {
-        std::cerr << "VERIFY: messages are not the same." << std::endl;
-        return;
-    }
+    // std::string recovered;
+    // try
+    // {
+    //     CryptoPP::StringSource(
+    //         (CryptoPP::byte*)signedMsg.data(), signedMsg.size(), true,
+    //         new CryptoPP::SignatureVerificationFilter(
+    //             verifier,
+    //             new CryptoPP::StringSink(recovered),
+    //             CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION |
+    //             CryptoPP::SignatureVerificationFilter::PUT_MESSAGE
+    //         )
+    //     );
+    // }
+    // catch(const std::exception& e)
+    // {
+    //     std::cerr << "EXCEPTION: " <<  e.what() << std::endl;
+    //     return;
+    // }
+    // // Deserialize message and compare with original.
+    // PlainTextMessage ptmVerify;
+    // if (not ptmVerify.ParseFromString(recovered))
+    // {
+    //     std::cerr << "Failed to parse PlainTextMessage." << std::endl;
+    //     return;
+    // }
+    // if (ptmVerify.text() != plainTextMessage.text())
+    // {
+    //     std::cerr << "VERIFY: messages are not the same." << std::endl;
+    //     return;
+    // }
     // VERIFY !!!!!!!!!
 
     SourceMessage srcMsg = SourceMessage();
@@ -423,22 +378,22 @@ void Application::_Send(const std::string &command)
 
     // VERIFY !!!!!!!!!
     // Decrypt and deserialize and check if src msg is the same as decrypted one.
-    std::string decSrcMsg;
-    CryptoPP::StringSource(
-        (CryptoPP::byte*)encSrcMsg.data(), encSrcMsg.size(), true,
-        //new CryptoPP::HexDecoder(
-        new CryptoPP::DefaultDecryptorWithMAC(
-            (CryptoPP::byte*)aesKey.data(), aesKey.size(),
-            new CryptoPP::StringSink(decSrcMsg)
-        )
-        //)
-    );
-    SourceMessage deserializedSrcMessage;
-    deserializedSrcMessage.ParseFromString(decSrcMsg);
-    if (deserializedSrcMessage.sourceid() != srcMsg.sourceid() || deserializedSrcMessage.signedmsg() != srcMsg.signedmsg())
-    {
-        std::cerr << "INVALID!" << std::endl;
-    }
+    // std::string decSrcMsg;
+    // CryptoPP::StringSource(
+    //     (CryptoPP::byte*)encSrcMsg.data(), encSrcMsg.size(), true,
+    //     //new CryptoPP::HexDecoder(
+    //     new CryptoPP::DefaultDecryptorWithMAC(
+    //         (CryptoPP::byte*)aesKey.data(), aesKey.size(),
+    //         new CryptoPP::StringSink(decSrcMsg)
+    //     )
+    //     //)
+    // );
+    // SourceMessage deserializedSrcMessage;
+    // deserializedSrcMessage.ParseFromString(decSrcMsg);
+    // if (deserializedSrcMessage.sourceid() != srcMsg.sourceid() || deserializedSrcMessage.signedmsg() != srcMsg.signedmsg())
+    // {
+    //     std::cerr << "INVALID!" << std::endl;
+    // }
     // VERIFY !!!!!!!!!
 
     // Make target RSA key.

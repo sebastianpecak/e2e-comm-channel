@@ -7,12 +7,24 @@
 #include <cryptopp/hex.h>
 #include <fstream>
 
-#define DB_FILE_NAME "cli.storage"
+#define ENV_DB_PATH     "E2E_CLI_DB_PATH"
+#define DEFAULT_DB_PATH "default-cli-db"
 
 UserKeyStore::UserKeyStore()
 {
+    // Try to get database file name from environment.
+    const char *envDbPath = getenv(ENV_DB_PATH);
+    if (envDbPath == nullptr)
+    {
+        std::cout << "Using default database path '" << DEFAULT_DB_PATH << '\'' << std::endl;
+        _dbPath = DEFAULT_DB_PATH;
+    }
+    else
+    {
+        _dbPath = envDbPath;
+    }
     // Load database if exists.
-    std::ifstream dbFile(DB_FILE_NAME, std::ios::in | std::ios::binary);
+    std::ifstream dbFile(_dbPath, std::ios::in | std::ios::binary);
     if (not dbFile.is_open())
     {
         std::cout << "Database file does not exist." << std::endl;
@@ -29,7 +41,7 @@ UserKeyStore::UserKeyStore()
 UserKeyStore::~UserKeyStore()
 {
     // Dump database to file.
-    _db.SerializeToOstream(new std::ofstream(DB_FILE_NAME, std::ios::out | std::ios::binary));
+    _db.SerializeToOstream(new std::ofstream(_dbPath, std::ios::out | std::ios::binary));
 }
 
 bool UserKeyStore::IsUserLoggable(const std::string &userId)
@@ -62,7 +74,7 @@ bool UserKeyStore::IsUserKnown(const std::string &userId)
     return false;
 }
 
-std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::GetPrivateKey(const std::string &userId, const std::string &pwd)
+std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::GetPrivateKey(const std::string &userId, const SafeString &pwd)
 {
     // Find user in loaded database by id.
     for (int i = 0; i < _db.records_size(); ++i)
@@ -77,16 +89,17 @@ std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::GetPrivateKey(const std
     return nullptr;
 }
 
-std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::_DecryptKey(const std::string &encKeyBytes, const std::string &pwd)
+std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::_DecryptKey(const std::string &encKeyBytes, const SafeString &pwd)
 {
     using namespace CryptoPP;
 
     // Make AES key out of password.
     SecByteBlock aesKey(AES::MAX_KEYLENGTH);
     SHA256 pwdHasher;
-    pwdHasher.CalculateDigest(aesKey, reinterpret_cast<const byte*>(pwd.data()), pwd.size());
+    pwdHasher.CalculateDigest(aesKey, reinterpret_cast<const byte*>(pwd.str().data()), pwd.str().size());
     // Decrypt private key.
-    std::string decPrivKey;
+    //std::string decPrivKey;
+    SafeString decPrivKey;
     //ByteQueue decPrivKey;
     try
     {
@@ -97,7 +110,7 @@ std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::_DecryptKey(const std::
             new DefaultDecryptorWithMAC(
                 (byte*)aesKey.data(),
                 aesKey.size(),
-                new StringSink(decPrivKey)
+                new StringSink(decPrivKey.str())
             )
         );
     }
@@ -106,13 +119,13 @@ std::unique_ptr<CryptoPP::RSA::PrivateKey> UserKeyStore::_DecryptKey(const std::
         return nullptr;
     }
     // Make private key.
-    StringSource decPrivKeySrc(decPrivKey, true);
+    StringSource decPrivKeySrc(decPrivKey.str(), true);
     std::unique_ptr<RSA::PrivateKey> key = std::make_unique<RSA::PrivateKey>();
     key->Load(decPrivKeySrc);
     return key;
 }
 
-void UserKeyStore::CreateUser(const std::string &userId, const std::string &pwd)
+void UserKeyStore::CreateUser(const std::string &userId, const SafeString &pwd)
 {
     using namespace CryptoPP;
 
@@ -127,15 +140,15 @@ void UserKeyStore::CreateUser(const std::string &userId, const std::string &pwd)
     StringSink serializedPubKeySink(*newRecord->mutable_publickey());
     newKeyPub.Save(serializedPubKeySink);
     // Serialize private key and encrypt it with hashed password.
-    std::string serializedPrivKey;
-    StringSink serializedPrivKeySink(serializedPrivKey);
+    SafeString serializedPrivKey;
+    StringSink serializedPrivKeySink(serializedPrivKey.str());
     newKey.Save(serializedPrivKeySink);
     SecByteBlock aesKey(AES::MAX_KEYLENGTH);
     SHA256 hasher;
-    hasher.CalculateDigest(aesKey, reinterpret_cast<const byte*>(pwd.data()), pwd.size());
+    hasher.CalculateDigest(aesKey, reinterpret_cast<const byte*>(pwd.str().data()), pwd.str().size());
     StringSource(
-        reinterpret_cast<const byte*>(serializedPrivKey.data()),
-        serializedPrivKey.size(),
+        reinterpret_cast<const byte*>(serializedPrivKey.str().data()),
+        serializedPrivKey.str().size(),
         true,
         new DefaultEncryptorWithMAC(
             reinterpret_cast<const byte*>(aesKey.data()),

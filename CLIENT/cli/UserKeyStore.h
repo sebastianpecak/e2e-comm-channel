@@ -6,6 +6,8 @@
 #include <cryptopp/rsa.h>
 #include <memory>
 
+#include "SafeString.h"
+
 /**
  * This class handles storing user key.
  */
@@ -16,7 +18,8 @@ public:
     /**
      * Decrypts and returns private key.
      */
-    std::unique_ptr<CryptoPP::RSA::PrivateKey> _DecryptKey(const std::string &encKeyBytes, const std::string &pwd);
+    std::unique_ptr<CryptoPP::RSA::PrivateKey> _DecryptKey(const std::string &encKeyBytes, const SafeString &pwd);
+    std::string _dbPath;
 
 public:
     UserKeyStore();
@@ -37,12 +40,12 @@ public:
      * Returns nullptr on failure.
      * Memory pointed by return value must be freed by caller.
      */
-    std::unique_ptr<CryptoPP::RSA::PrivateKey> GetPrivateKey(const std::string &userId, const std::string &pwd);
+    std::unique_ptr<CryptoPP::RSA::PrivateKey> GetPrivateKey(const std::string &userId, const SafeString &pwd);
     /**
      * This function creates new user entry in storage.
      * It generates new RSA key and encrypts it with given password.
      */
-    void CreateUser(const std::string &userId, const std::string &pwd);
+    void CreateUser(const std::string &userId, const SafeString &pwd);
     /**
      * Precondition: user must exist - check using IsUserKnown.
      * Returns user's public key.
