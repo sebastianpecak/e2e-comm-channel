@@ -18,6 +18,11 @@ ServerConnection::ServerConnection() :
     inet_pton(AF_INET, SERVER_ADDRESS, &_svrAddress.sin_addr);
 }
 
+ServerConnection::~ServerConnection()
+{
+    static_cast<void>(Close());
+}
+
 bool ServerConnection::Open()
 {
     // If connection is already opened then return right away.

@@ -26,6 +26,7 @@ private:
 
 public:
     ServerConnection();
+    ~ServerConnection();
     /**
      * Tries to open stream connection to application server.
      * Returns true on success.

@@ -28,8 +28,20 @@ public:
      * Returns true on success.
      */
     bool GetSvrInfo(ServerInfo &output);
+    /**
+     * Tries to send new message to relay server.
+     * Returns true on success.
+     */
     bool SendMessage(const TargetMessage &message);
+    /**
+     * Tries to download all user's messages from relay server.
+     * Returns true on succes.
+     */
     bool GetAllMessages(const std::string &userId, AllMessagesReply &output);
+    /**
+     * Tries to send messages' delivery result to server.
+     * Returns true on success.
+     */
     bool SendDeliveryResult(const DeliveryResult &result);
 };
 
