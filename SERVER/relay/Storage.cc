@@ -26,3 +26,15 @@ void Storage::ConfirmDelivery(const std::string &recipient, const std::string &m
         }
     }
 }
+
+void Storage::RemoveMessage(const std::string &recipient, const std::string &msgId)
+{
+    for (auto &msg : _storage[recipient])
+    {
+        if (msg.GetId() == msgId)
+        {
+            msg.SetInvalid(true);
+            return;
+        }
+    }
+}

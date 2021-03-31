@@ -3,12 +3,6 @@
  */ 
 syntax = "proto3";
 
-//message ConfirmDelivery
-//{
-//    string userId             = 1;
-//    repeated string messageId = 2;
-//}
-
 enum DeliveryStatus
 {
     UNKNOWN = 0;

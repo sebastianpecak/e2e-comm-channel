@@ -50,6 +50,11 @@ public:
      * Message then can be removed from server's storage.
      */
     void ConfirmDelivery(const std::string &recipient, const std::string &msgId);
+    /**
+     * This function should be called when client responded with
+     * MSG_NOK which indicates that message is invalid.
+     */
+    void RemoveMessage(const std::string &recipient, const std::string &msgId);
 };
 
 // void test()

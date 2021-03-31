@@ -7,7 +7,7 @@
 #include "TargetMessage.pb.h"
 #include "ServerInterface.pb.h"
 #include "AllMessages.pb.h"
-#include "ConfirmDelivery.pb.h"
+#include "DeliveryResult.pb.h"
 #include "ServerInfo.pb.h"
 // Include cypto++.
 #include <cryptopp/sha.h>
@@ -157,9 +157,6 @@ void Application::_Logout(const std::string &command)
         std::cout << "No user was logged in." << std::endl;
     }
 }
-
-
-
 
 void Application::_Login(const std::string &command)
 {
@@ -443,57 +440,63 @@ void Application::_Send(const std::string &command)
     targetMsg.set_encsymetrickey(encSymetricKey);
     targetMsg.set_encdata(encSrcMsg);
 
+    if (not _svrIface.SendMessage(targetMsg))
+    {
+        std::cerr << "Failed to send message." << std::endl;
+        return;
+    }
+
     // Make server interface message.
-    ServerRequest request;
-    request.set_type(ServerRequestType::SEND_MSG);
-    request.set_data(targetMsg.SerializeAsString());
+    // ServerRequest request;
+    // request.set_type(ServerRequestType::SEND_MSG);
+    // request.set_data(targetMsg.SerializeAsString());
 
-    // Now serialize request and send it to the server.
-    const auto serializedRequest = request.SerializeAsString();
-    std::cout << "SERIALIZED REQUEST SIZE: " << serializedRequest.size() <<  std::endl;
+    // // Now serialize request and send it to the server.
+    // const auto serializedRequest = request.SerializeAsString();
+    // std::cout << "SERIALIZED REQUEST SIZE: " << serializedRequest.size() <<  std::endl;
 
-    // Send TCP message to server.
-    const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (tcpSocket == -1)
-    {
-        std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    sockaddr_in serverAddress     = sockaddr_in();
-    serverAddress.sin_family      = AF_INET;
-    serverAddress.sin_port        = htons(1111);
-    serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    // Try to connect to server.
-    if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
-    {
-        std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    const ssize_t result = send(tcpSocket, serializedRequest.data(), serializedRequest.size(), 0);
-    if (result < serializedRequest.size())
-    {
-        std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
-        return;
-    }
-    // Wait for server response.
-    unsigned char replyBuffer[4096];
-    const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
-    if (recvResult == -1)
-    {
-        std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    // Parse response.
-    ServerReply svrReply;
-    if (not svrReply.ParseFromArray(replyBuffer, recvResult))
-    {
-        std::cerr << "Failed to parse server response." << std::endl;
-        return;
-    }
-    std::cout << "Server replied with " << svrReply.reply() << std::endl;
-    shutdown(tcpSocket, SHUT_RDWR);
-    close(tcpSocket);
-    return;
+    // // Send TCP message to server.
+    // const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    // if (tcpSocket == -1)
+    // {
+    //     std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // sockaddr_in serverAddress     = sockaddr_in();
+    // serverAddress.sin_family      = AF_INET;
+    // serverAddress.sin_port        = htons(1111);
+    // serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    // // Try to connect to server.
+    // if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
+    // {
+    //     std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // const ssize_t result = send(tcpSocket, serializedRequest.data(), serializedRequest.size(), 0);
+    // if (result < serializedRequest.size())
+    // {
+    //     std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
+    //     return;
+    // }
+    // // Wait for server response.
+    // unsigned char replyBuffer[4096];
+    // const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
+    // if (recvResult == -1)
+    // {
+    //     std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // // Parse response.
+    // ServerReply svrReply;
+    // if (not svrReply.ParseFromArray(replyBuffer, recvResult))
+    // {
+    //     std::cerr << "Failed to parse server response." << std::endl;
+    //     return;
+    // }
+    // std::cout << "Server replied with " << svrReply.reply() << std::endl;
+    // shutdown(tcpSocket, SHUT_RDWR);
+    // close(tcpSocket);
+    // return;
 }
 
 void Application::_Recv(const std::string &command)
@@ -503,75 +506,81 @@ void Application::_Recv(const std::string &command)
         std::cerr << "You must login first." << std::endl;
         return;
     }
-    printf("Receiving mesage for %s\n", _userName.c_str());
-    // Make server interface message.
-    ServerRequest request;
-    request.set_type(ServerRequestType::RECV_ALL_MSG);
-    AllMessagesRequest allMsgReq;
-    allMsgReq.set_userid(_userName);
-    request.set_data(allMsgReq.SerializeAsString());
-    // Serialize whole request.
-    const auto serializedRequest = request.SerializeAsString();
+    // printf("Receiving mesage for %s\n", _userName.c_str());
+    // // Make server interface message.
+    // ServerRequest request;
+    // request.set_type(ServerRequestType::RECV_ALL_MSG);
+    // AllMessagesRequest allMsgReq;
+    // allMsgReq.set_userid(_userName);
+    // request.set_data(allMsgReq.SerializeAsString());
+    // // Serialize whole request.
+    // const auto serializedRequest = request.SerializeAsString();
 
-    // Send TCP message to server.
-    const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (tcpSocket == -1)
-    {
-        std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    sockaddr_in serverAddress     = sockaddr_in();
-    serverAddress.sin_family      = AF_INET;
-    serverAddress.sin_port        = htons(1111);
-    serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    // Try to connect to server.
-    if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
-    {
-        std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    const ssize_t result = send(tcpSocket, serializedRequest.data(), serializedRequest.size(), 0);
-    //const ssize_t result = sendto(udpSocket, serializedRequest.data(), serializedRequest.size(), 0, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress));
-    if (result < serializedRequest.size())
-    {
-        std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
-        return;
-    }
-    // Wait for server response.
-    unsigned char replyBuffer[4096];
-    const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
-    if (recvResult == -1)
-    {
-        std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    // Parse response.
-    ServerReply svrReply;
-    if (not svrReply.ParseFromArray(replyBuffer, recvResult))
-    {
-        std::cerr << "Failed to parse server response." << std::endl;
-        return;
-    }
-    std::cout << "Server replied with " << svrReply.reply() << std::endl;
+    // // Send TCP message to server.
+    // const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    // if (tcpSocket == -1)
+    // {
+    //     std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // sockaddr_in serverAddress     = sockaddr_in();
+    // serverAddress.sin_family      = AF_INET;
+    // serverAddress.sin_port        = htons(1111);
+    // serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    // // Try to connect to server.
+    // if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
+    // {
+    //     std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // const ssize_t result = send(tcpSocket, serializedRequest.data(), serializedRequest.size(), 0);
+    // //const ssize_t result = sendto(udpSocket, serializedRequest.data(), serializedRequest.size(), 0, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress));
+    // if (result < serializedRequest.size())
+    // {
+    //     std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
+    //     return;
+    // }
+    // // Wait for server response.
+    // unsigned char replyBuffer[4096];
+    // const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
+    // if (recvResult == -1)
+    // {
+    //     std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // // Parse response.
+    // ServerReply svrReply;
+    // if (not svrReply.ParseFromArray(replyBuffer, recvResult))
+    // {
+    //     std::cerr << "Failed to parse server response." << std::endl;
+    //     return;
+    // }
+    // std::cout << "Server replied with " << svrReply.reply() << std::endl;
     AllMessagesReply allMsg;
-    if (not allMsg.ParseFromString(svrReply.data()))
+    if (not _svrIface.GetAllMessages(_userName, allMsg))
     {
-        std::cerr << "Failed to parse AllMessagesReply." << std::endl;
+        std::cerr << "Failed to get all messages from server." << std::endl;
         return;
     }
+    // if (not allMsg.ParseFromString(svrReply.data()))
+    // {
+    //     std::cerr << "Failed to parse AllMessagesReply." << std::endl;
+    //     return;
+    // }
     // Make request to confirm delivery of messages.
     if (allMsg.messages_size() > 0)
     {
-        ServerRequest confirmReq;
-        confirmReq.set_type(ServerRequestType::CONFIRM_DELIVERY);
-        ConfirmDelivery confirmMsg;
-        confirmMsg.set_userid(_userName);
+        //ServerRequest confirmReq;
+        //confirmReq.set_type(ServerRequestType::CONFIRM_DELIVERY);
+        //ConfirmDelivery confirmMsg;
+        DeliveryResult deliveryMsg;
+        deliveryMsg.set_userid(_userName);
         // For each message.
         for (int i = 0; i < allMsg.messages_size(); ++i)
         {
             const ForwardTargetMessage &ftg = allMsg.messages(i);
             printf("NEW: Received message of ID %s\n", ftg.id().c_str());
-            confirmMsg.add_messageid(ftg.id());
+            //confirmMsg.add_messageid(ftg.id());
             // Decrypt symetric key.
             CryptoPP::RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(*_userKey);// _GetPrivateKey(_userName));
             std::string aesKey;
@@ -595,6 +604,7 @@ void Application::_Recv(const std::string &command)
             SourceMessage srcMsg;
             if (not srcMsg.ParseFromString(decSrcMsg))
             {
+                (*deliveryMsg.mutable_msgstatus())[ftg.id()] = DeliveryStatus::MSG_NOK;
                 std::cerr << "Failed to deserialize message " << ftg.id() << std::endl;
                 continue;
             }
@@ -615,6 +625,7 @@ void Application::_Recv(const std::string &command)
             }
             catch(const std::exception& e)
             {
+                (*deliveryMsg.mutable_msgstatus())[ftg.id()] = DeliveryStatus::MSG_NOK;
                 std::cerr << e.what() << '\n';
                 continue;
             }
@@ -622,98 +633,117 @@ void Application::_Recv(const std::string &command)
             PlainTextMessage ptm;
             if (not ptm.ParseFromString(serializedMsg))
             {
+                (*deliveryMsg.mutable_msgstatus())[ftg.id()] = DeliveryStatus::MSG_NOK;
                 std::cerr << "Failed to deserialize PlainTextMessage " << ftg.id() << std::endl;
                 continue;
             }
             // Print this message to user.
+            (*deliveryMsg.mutable_msgstatus())[ftg.id()] = DeliveryStatus::MSG_OK;
             std::cout << "Message from <" << srcMsg.sourceid() << ">:" << std::endl << ptm.text() << std::endl;
         }
-        confirmReq.set_data(confirmMsg.SerializeAsString());
-        const auto serializedMsgDel = confirmReq.SerializeAsString();
-        const ssize_t result2 = send(tcpSocket, serializedMsgDel.data(), serializedMsgDel.size(), 0);
-        //const ssize_t result = sendto(udpSocket, serializedRequest.data(), serializedRequest.size(), 0, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress));
-        if (result2 < serializedMsgDel.size())
+        if (not _svrIface.SendDeliveryResult(deliveryMsg))
         {
-            std::cerr << "Sent " << result2 << " bytes, errno " << errno << std::endl;
+            std::cerr << "Failed to send delivery result message to server." << std::endl;
             return;
         }
-        // Wait for server response.
-        const ssize_t recvResult2 = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
-        if (recvResult2 == -1)
-        {
-            std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
-            return;
-        }
-        // Parse response.
-        ServerReply svrReply2;
-        if (not svrReply2.ParseFromArray(replyBuffer, recvResult2))
-        {
-            std::cerr << "Failed to parse server response." << std::endl;
-            return;
-        }
-        std::cout << "Server replied with " << svrReply2.reply() << std::endl;
+        // confirmReq.set_data(deliveryMsg.SerializeAsString());
+        // const auto serializedMsgDel = confirmReq.SerializeAsString();
+        // const ssize_t result2 = send(tcpSocket, serializedMsgDel.data(), serializedMsgDel.size(), 0);
+        // //const ssize_t result = sendto(udpSocket, serializedRequest.data(), serializedRequest.size(), 0, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress));
+        // if (result2 < serializedMsgDel.size())
+        // {
+        //     std::cerr << "Sent " << result2 << " bytes, errno " << errno << std::endl;
+        //     return;
+        // }
+        // // Wait for server response.
+        // const ssize_t recvResult2 = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
+        // if (recvResult2 == -1)
+        // {
+        //     std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
+        //     return;
+        // }
+        // // Parse response.
+        // ServerReply svrReply2;
+        // if (not svrReply2.ParseFromArray(replyBuffer, recvResult2))
+        // {
+        //     std::cerr << "Failed to parse server response." << std::endl;
+        //     return;
+        // }
+        // std::cout << "Server replied with " << svrReply2.reply() << std::endl;
     }
-    shutdown(tcpSocket, SHUT_RDWR);
-    close(tcpSocket);
-    return;
+    else
+    {
+        std::cout << "There are no new message for you." << std::endl;
+    }
+    // shutdown(tcpSocket, SHUT_RDWR);
+    // close(tcpSocket);
+    // return;
 }
 
-void Application::_SvrInfo(const std::string &command) const
+void Application::_SvrInfo(const std::string &command)
 {
-    printf("Getting server info...\n");
-    ServerRequest svrReq;
-    svrReq.set_type(ServerRequestType::GET_SVR_INFO);
-    const auto serializedReq = svrReq.SerializeAsString();
-    std::cout << "size: " << serializedReq.size() << std::endl;
-
-    // Send TCP message to server.
-    const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (tcpSocket == -1)
-    {
-        std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    sockaddr_in serverAddress     = sockaddr_in();
-    serverAddress.sin_family      = AF_INET;
-    serverAddress.sin_port        = htons(1111);
-    serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    // Try to connect to server.
-    if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
-    {
-        std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    const ssize_t result = send(tcpSocket, serializedReq.data(), serializedReq.size(), 0);
-    if (result < serializedReq.size())
-    {
-        std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
-        return;
-    }
-    // Wait for server response.
-    unsigned char replyBuffer[4096];
-    const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
-    if (recvResult == -1)
-    {
-        std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
-        return;
-    }
-    ServerReply svrReply;
-    if (not svrReply.ParseFromArray(replyBuffer, recvResult))
-    {
-        std::cerr << "Failed to parse server reply." << std::endl;
-        return;
-    }
-    std::cout << "Server replied with " << svrReply.reply() << std::endl;
     ServerInfo svrInfo;
-    if (not svrInfo.ParseFromString(svrReply.data()))
+    if (not _svrIface.GetSvrInfo(svrInfo))
     {
-        std::cerr << "Failed to parse server info." << std::endl;
+        std::cerr << "Failed to get server info." << std::endl;
         return;
     }
     std::cout << "SERVER NAME: " << svrInfo.name() << ", SERVER VERSION: " << svrInfo.version() << std::endl;
-    shutdown(tcpSocket, SHUT_RDWR);
-    close(tcpSocket);
-    return;
+
+    // printf("Getting server info...\n");
+    // ServerRequest svrReq;
+    // svrReq.set_type(ServerRequestType::GET_SVR_INFO);
+    // const auto serializedReq = svrReq.SerializeAsString();
+    // std::cout << "size: " << serializedReq.size() << std::endl;
+
+    // // Send TCP message to server.
+    // const int tcpSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    // if (tcpSocket == -1)
+    // {
+    //     std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // sockaddr_in serverAddress     = sockaddr_in();
+    // serverAddress.sin_family      = AF_INET;
+    // serverAddress.sin_port        = htons(1111);
+    // serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    // // Try to connect to server.
+    // if (connect(tcpSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
+    // {
+    //     std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // const ssize_t result = send(tcpSocket, serializedReq.data(), serializedReq.size(), 0);
+    // if (result < serializedReq.size())
+    // {
+    //     std::cerr << "Sent " << result << " bytes, errno " << errno << std::endl;
+    //     return;
+    // }
+    // // Wait for server response.
+    // unsigned char replyBuffer[4096];
+    // const ssize_t recvResult = recv(tcpSocket, replyBuffer, sizeof(replyBuffer), 0);
+    // if (recvResult == -1)
+    // {
+    //     std::cerr << "Failed to receive TCP socket, due to: " << errno << std::endl;
+    //     return;
+    // }
+    // ServerReply svrReply;
+    // if (not svrReply.ParseFromArray(replyBuffer, recvResult))
+    // {
+    //     std::cerr << "Failed to parse server reply." << std::endl;
+    //     return;
+    // }
+    // std::cout << "Server replied with " << svrReply.reply() << std::endl;
+    // ServerInfo svrInfo;
+    // if (not svrInfo.ParseFromString(svrReply.data()))
+    // {
+    //     std::cerr << "Failed to parse server info." << std::endl;
+    //     return;
+    // }
+    // std::cout << "SERVER NAME: " << svrInfo.name() << ", SERVER VERSION: " << svrInfo.version() << std::endl;
+    // shutdown(tcpSocket, SHUT_RDWR);
+    // close(tcpSocket);
+    // return;
 }
 
 void Application::_Exit(const std::string &command)

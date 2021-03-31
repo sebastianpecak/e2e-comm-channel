@@ -3,7 +3,9 @@
 #include <cryptopp/hex.h>
 
 Message::Message(const TargetMessage &tgtMsg) :
-    _tgtMsg(tgtMsg)
+    _tgtMsg(tgtMsg),
+    _isDelivered(false),
+    _isInvalid(false)
 {
     using namespace CryptoPP;
     // Generate random id.
@@ -19,24 +21,4 @@ Message::Message(const TargetMessage &tgtMsg) :
             new StringSink(_id)
         )
     );
-}
-
-const std::string& Message::GetId() const
-{
-    return _id;
-}
-
-bool Message::GetDelivered() const
-{
-    return _isDelivered;
-}
-
-const TargetMessage& Message::GetMessage() const
-{
-    return _tgtMsg;
-}
-
-void Message::SetDelivered(bool isDelivered)
-{
-    _isDelivered = isDelivered;
 }

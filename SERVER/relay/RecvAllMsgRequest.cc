@@ -20,7 +20,7 @@ void RecvAllMsgRequest::Process()
     // Make reply out of undelivered messages.
     for (const auto &msg : _storage->GetAllMessages(allMsg.userid()))
     {
-        if (not msg.GetDelivered())
+        if (not msg.GetDelivered() && not msg.GetInvalid())
         {
             ForwardTargetMessage *newMsg = _allMsgReply.add_messages();
             newMsg->set_id(msg.GetId());

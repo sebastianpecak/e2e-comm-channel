@@ -69,7 +69,7 @@ help:
 	$(CC) -fPIC -c -o $@ $< $(CCFLAGS)
 
 # Special rule that has complex dependency.
-AllMessages.pb.cc.o: AllMessages.pb.cc ForwardTargetMessage.pb.cc
+AllMessages.pb.cc.o: AllMessages.pb.cc ForwardTargetMessage.pb.cc TargetMessage.pb.cc
 	$(CC) -fPIC -c -o $@ $< $(CCFLAGS)
 
 %.so: $(BUILD_OBJECTS)

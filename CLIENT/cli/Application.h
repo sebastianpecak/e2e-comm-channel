@@ -7,6 +7,7 @@
 #include <cryptopp/osrng.h>
 //#include <unordered_map>
 #include "UserKeyStore.h"
+#include "ServerInterface.h"
 
 class Application
 {
@@ -36,13 +37,14 @@ private:
     CryptoPP::AutoSeededRandomPool rng;
     UserKeyStore _keyStore;
     std::unique_ptr<CryptoPP::RSA::PrivateKey> _userKey;
+    ServerInterface _svrIface;
 
     void _Initialize();
     void _ProcessCommand(const std::string &command);
     void _DisplayHelp() const;
     void _Send(const std::string &command);
     void _Recv(const std::string &command);
-    void _SvrInfo(const std::string &command) const;
+    void _SvrInfo(const std::string &command);
     void _Exit(const std::string &command);
     void _Login(const std::string &command);
     void _CreateUser(const std::string &command);

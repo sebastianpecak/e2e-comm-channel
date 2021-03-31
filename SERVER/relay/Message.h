@@ -19,6 +19,7 @@ class Message
      * Flag to determine if message has been delivered to target.
      */
     bool _isDelivered;
+    bool _isInvalid;
 
 public:
     /**
@@ -28,13 +29,33 @@ public:
     /**
      * Getters.
      */
-    const std::string& GetId() const;
-    bool GetDelivered() const;
-    const TargetMessage& GetMessage() const;
+    inline const std::string& GetId() const
+    {
+        return _id;
+    }
+    inline bool GetDelivered() const
+    {
+        return _isDelivered;
+    }
+    inline bool GetInvalid() const
+    {
+        return _isInvalid;
+    }
+    inline const TargetMessage& GetMessage() const
+    {
+        return _tgtMsg;
+    }
     /**
      * Setters.
      */
-    void SetDelivered(bool isDelivered);
+    inline void SetDelivered(bool isDelivered)
+    {
+        _isDelivered = isDelivered;
+    }
+    inline void SetInvalid(bool isInvalid)
+    {
+        _isInvalid = isInvalid;
+    }
 };
 
 #endif // MESSAGE_H
