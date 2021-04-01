@@ -36,7 +36,7 @@ BUILD_OBJECTS_PROTO = $(patsubst %.proto,%.pb.cc.o,$(BUILD_PROTO))
 .PRECIOUS: %.cc.o %.a %.so %.pb.h %.pb.cc %.pb.cc.o
 
 # Main target. Build interface library.
-main: $(OUTPUT_APP_NAME)
+main: compile_proto $(OUTPUT_APP_NAME)
 	@echo "$@: Done."
 
 # Remove all build artifacts and ProtoBuf generated sources and headers.

@@ -2,10 +2,8 @@
 #define USERKEYSTORE_H
 
 #include "AppDb.pb.h"
-//#include <fstream>
 #include <cryptopp/rsa.h>
 #include <memory>
-
 #include "SafeString.h"
 
 /**

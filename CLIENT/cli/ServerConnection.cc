@@ -53,8 +53,7 @@ bool ServerConnection::Close()
     // Socket must be valid for this call.
     if (not IsOpened())
     {
-        std::cerr << "Connection must be opened prior to be closed." << std::endl;
-        return false;
+        return true;
     }
     // Try to shutdown and close socket.
     bool result = true;

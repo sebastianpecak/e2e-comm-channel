@@ -1,7 +1,12 @@
 #include "Application.h"
 
-Application app(0, nullptr);
-int main(int argc, char **argv)
+/**
+ * Client application instance.
+ */
+static Application app;
+
+int main()
 {
-    return app.Run();
+    app.Run();
+    return 0;
 }
