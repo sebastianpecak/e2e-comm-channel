@@ -3,11 +3,11 @@ include ../../COMMON/common.mk
 
 CCFLAGS = -g
 LDFLAGS =
-INCLUDE_PATH = ../../INTERFACE
+INCLUDE_PATH = ../../INTERFACE ../lib
 INCLUDES = $(addprefix -I, $(INCLUDE_PATH))
 
 # Library output name.
-OUTPUT_NAME      = cli
+OUTPUT_NAME      = e2eem-client
 OUTPUT_APP_NAME  = $(OUTPUT_NAME).bin
 OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 
@@ -20,7 +20,7 @@ BUILD_CC_SRC      = $(filter-out $(EXCLUDED_CC_SRC), $(ALL_CC_SRC))
 BUILD_OBJ         = $(patsubst %.cc,%.cc.o, $(BUILD_CC_SRC))
 BUILD_OBJ_NO_MAIN = $(filter-out main.cc.o, $(BUILD_OBJ))
 # List of external dependencies like shared/static libraries.
-APP_DEPENDENCIES  = ../../INTERFACE/libinterface.a ../../DEPENDENCIES/protobuf/src/.libs/libprotobuf.a /usr/local/lib/libcryptopp.a
+APP_DEPENDENCIES  = ../lib/libe2eem-client.a ../../INTERFACE/libe2eem-iface.a ../../DEPENDENCIES/protobuf/src/.libs/libprotobuf.a /usr/local/lib/libcryptopp.a
 TEST_DEPENDENCIES = /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a
 
 # Auto generated sources.

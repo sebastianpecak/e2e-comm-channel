@@ -4,7 +4,7 @@ include ../COMMON/common.mk
 CCFLAGS = -g
 
 # Library output name.
-OUTPUT_NAME = interface
+OUTPUT_NAME = e2eem-iface
 OUTPUT_LIB_NAME = lib$(OUTPUT_NAME)
 
 # If some files should not be compiled - put them here.
