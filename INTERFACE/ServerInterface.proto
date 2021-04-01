@@ -3,8 +3,6 @@
  */ 
 syntax = "proto3";
 
-//import 'TargetMessage.proto';
-
 enum ServerRequestType
 {
     UNKOWN           = 0; // Needed to add this value as having get_svr_info=0 resulted in error in message serialization.

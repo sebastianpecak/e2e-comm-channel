@@ -4,16 +4,10 @@
 syntax = "proto3";
 
 /*
- * Use existsing Hash data type.
- */
-import 'Hash.proto';
-
-/*
  * This is the data structure that carriers file name and its content.
  */ 
 message FileMessage
 {
     string name   = 1;
     bytes content = 2;
-    Hash msgHash  = 3;
 }

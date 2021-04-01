@@ -5,15 +5,8 @@ syntax = "proto3";
 
 /*
  * This data type carries information about sender of the message.
- * Message itself is encrypted using sender's private key.
- * That assures that only true sender of given id could send it.
+ * Message itself is signed using sender's private key.
  */
-//message SourceMessage
-//{
-//    string senderId = 1;
-//    bytes encMsg    = 2;
-//}
-
 message SourceMessage
 {
     string sourceId = 1;
