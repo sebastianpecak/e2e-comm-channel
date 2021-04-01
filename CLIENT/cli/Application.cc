@@ -24,6 +24,7 @@
 #include <termios.h>
 
 #include "SafeString.h"
+#include "Tokenizer.h"
 
 #define LOG_ERROR(message) \
     fprintf(stderr, "ERR: %s\n", (message))
@@ -32,7 +33,7 @@ Application::Application(int argc, char **argv) :
     _config(),
     _needToStop(false)
 {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    //GOOGLE_PROTOBUF_VERIFY_VERSION;
     _config.ParseCliArguments(argc, argv);
 }
 
@@ -113,31 +114,35 @@ void Application::_ProcessCommand(const std::string &command)
 
 void Application::_ExportUser(const std::string &command)
 {
-    const auto separator = command.find(' ');
-    const auto userId = command.substr(separator + 1);
-    if (separator == std::string::npos || userId.length() == 0)
+    const auto tokenizer = Tokenizer(command, ' ');
+    //const auto separator = command.find(' ');
+    //const auto userId = command.substr(separator + 1);
+    //if (separator == std::string::npos || userId.length() == 0)
+    if (tokenizer.GetTokensCount() < 2)
     {
-        std::cerr << "You must specify target id." << std::endl;
+        std::cerr << "You must specify target user's id." << std::endl;
         return;
     }
-    if (not _keyStore.IsUserKnown(userId))
+    if (not _keyStore.IsUserKnown(tokenizer.GetToken(1)))
     {
         std::cerr << "There is no such user." << std::endl;
         return;
     }
-    std::cout << "COMPACT-RECORD: " << _keyStore.ExportCompactRecord(userId) << std::endl;
+    std::cout << "COMPACT-RECORD: " << _keyStore.ExportCompactRecord(tokenizer.GetToken(1)) << std::endl;
 }
 
 void Application::_ImportUser(const std::string &command)
 {
-    const auto separator = command.find(' ');
-    const auto compactRecord = command.substr(separator + 1);
-    if (separator == std::string::npos || compactRecord.length() == 0)
+    const auto tokenizer = Tokenizer(command, ' ');
+    //const auto separator = command.find(' ');
+    //const auto compactRecord = command.substr(separator + 1);
+    //if (separator == std::string::npos || compactRecord.length() == 0)
+    if (tokenizer.GetTokensCount() < 2)
     {
         std::cerr << "Missing compact-record value." << std::endl;
         return;
     }
-    if (not _keyStore.ImportCompactRecord(compactRecord))
+    if (not _keyStore.ImportCompactRecord(tokenizer.GetToken(1)))
     {
         std::cerr << "Failed to import user from compact-record." << std::endl;
         return;
@@ -166,18 +171,20 @@ void Application::_Login(const std::string &command)
         std::cerr << "Need to logout first." << std::endl;
         return;
     }
-    const auto separator = command.find(' ');
-    _userName = command.substr(separator + 1);
-    if (separator == std::string::npos || _userName.length() == 0)
+    const auto tokenizer = Tokenizer(command, ' ');
+    //const auto separator = command.find(' ');
+    //_userName = command.substr(separator + 1);
+    //if (separator == std::string::npos || _userName.length() == 0)
+    if (tokenizer.GetTokensCount() < 2)
     {
-        _userName.clear();
+        //_userName.clear();
         std::cerr << "Missing user id for login command." << std::endl;
         return;
     }
     // Check if user exists.
-    if (not _keyStore.IsUserLoggable(_userName))
+    if (not _keyStore.IsUserLoggable(tokenizer.GetToken(1)))
     {
-        _userName.clear();
+        //_userName.clear();
         std::cerr << "This user does not allow login." << std::endl;
         return;
     }
@@ -188,26 +195,29 @@ void Application::_Login(const std::string &command)
     std::cin >> password.str();
     std::cin.ignore();
     _SetTerminalPasswordMode(false);
-    _userKey = _keyStore.GetPrivateKey(_userName, password);
+    _userKey = _keyStore.GetPrivateKey(tokenizer.GetToken(1), password);
     if (_userKey == nullptr)
     {
-        _userName.clear();
+        //_userName.clear();
         std::cerr << std::endl << "Failed to login user. Probably invalid password." << std::endl;
         return;
     }
+    _userName = tokenizer.GetToken(1);
     std::cout << std::endl << "User successfully logged in." << std::endl;
 }
 
 void Application::_CreateUser(const std::string &command)
 {
-    const auto separator = command.find(' ');
-    const auto userId = command.substr(separator + 1);
-    if (separator == std::string::npos || userId.length() == 0)
+    const auto tokenizer = Tokenizer(command, ' ');
+    //const auto separator = command.find(' ');
+    //const auto userId = command.substr(separator + 1);
+    //if (separator == std::string::npos || userId.length() == 0)
+    if (tokenizer.GetTokensCount() < 2)
     {
         std::cerr << "Missing user id for create command." << std::endl;
         return;
     }
-    if (_keyStore.IsUserKnown(userId))
+    if (_keyStore.IsUserKnown(tokenizer.GetToken(1)))
     {
         std::cerr << "This user already exists." << std::endl;
         return;
@@ -230,7 +240,7 @@ void Application::_CreateUser(const std::string &command)
         std::cerr << std::endl << "Passwords are not the same." << std::endl;
         return;
     }
-    _keyStore.CreateUser(userId, pwd);
+    _keyStore.CreateUser(tokenizer.GetToken(1), pwd);
     std::cout << std::endl << "New user has been added." << std::endl;
 }
 
@@ -256,20 +266,22 @@ void Application::_Send(const std::string &command)
         std::cerr << "You must login first." << std::endl;
         return;
     }
+    const auto tokenizer = Tokenizer(command, ' ');
     // Get recipient id from command.
-    const auto separator = command.find(' ');
-    const auto recipient = command.substr(separator + 1);
-    if (separator == std::string::npos || recipient.length() == 0)
+    //const auto separator = command.find(' ');
+    //const auto recipient = command.substr(separator + 1);
+    //if (separator == std::string::npos || recipient.length() == 0)
+    if (tokenizer.GetTokensCount() < 2)
     {
         std::cerr << "You must specify target id." << std::endl;
         return;
     }
-    if (not _keyStore.IsUserKnown(recipient))
+    if (not _keyStore.IsUserKnown(tokenizer.GetToken(1)))
     {
         std::cerr << "You do not have recipient's public key and cannot send message to them." << std::endl;
         return;
     }
-    printf("Sending mesage to %s\n", recipient.c_str());
+    //printf("Sending mesage to %s\n", recipient.c_str());
     printf("Enter your message below. End it by typing enter.enter\n");
     // Read users message.
     std::stringstream builder;
@@ -400,7 +412,7 @@ void Application::_Send(const std::string &command)
     //_GenerateKeyIfNeeded(recipient);
 
     // Encrypt AES key with target's public key.
-    CryptoPP::RSAES_OAEP_SHA_Encryptor aesKeyEncryptor(_keyStore.GetPublicKey(recipient)); //_GetPublicKey(recipient));
+    CryptoPP::RSAES_OAEP_SHA_Encryptor aesKeyEncryptor(_keyStore.GetPublicKey(tokenizer.GetToken(1))); //_GetPublicKey(recipient));
     std::string encSymetricKey;
     CryptoPP::StringSource(
         aesKey.data(), aesKey.size(), true,
@@ -436,7 +448,7 @@ void Application::_Send(const std::string &command)
 
     // Make target message.
     TargetMessage targetMsg;
-    targetMsg.set_targetid(recipient);
+    targetMsg.set_targetid(tokenizer.GetToken(1));
     targetMsg.set_encsymetrickey(encSymetricKey);
     targetMsg.set_encdata(encSrcMsg);
 
