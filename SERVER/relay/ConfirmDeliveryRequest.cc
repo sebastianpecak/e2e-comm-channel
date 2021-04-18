@@ -1,10 +1,10 @@
 #include "ConfirmDeliveryRequest.h"
 #include "DeliveryResult.pb.h"
 
-ConfirmDeliveryRequest::ConfirmDeliveryRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer) :
+ConfirmDeliveryRequest::ConfirmDeliveryRequest(Storage *storage, const ServerRequest &request) :
+    _log("ConfirmDeliveryRequest"),
     _storage(storage),
     _request(request),
-    _peer(peer),
     _isProcessed(false)
 {
 }
@@ -15,7 +15,7 @@ void ConfirmDeliveryRequest::Process()
     DeliveryResult confirmMsg;
     if (not confirmMsg.ParseFromString(_request.data()))
     {
-        fprintf(stderr, "ConfirmDeliveryRequest::Process: Failed to parse ConfirmDelivery.");
+        LOG_ERROR() << "Failed to parse ConfirmDelivery.";
         return;
     }
     for (const auto &msg : confirmMsg.msgstatus())
@@ -30,13 +30,9 @@ void ConfirmDeliveryRequest::Process()
         }
         else
         {
-            fprintf(stderr, "Unkown delivery message %s status.\n", msg.first.c_str());
+            LOG_ERROR() << "Unkown delivery message status " << msg.first << '.';
         }
     }
-    //for (int i = 0; i < confirmMsg.msg; ++i)
-    //{
-    //    _storage->ConfirmDelivery(confirmMsg.userid(), confirmMsg.messageid(i));
-    //}
     _isProcessed = true;
 }
 
@@ -46,9 +42,4 @@ ServerReply ConfirmDeliveryRequest::GetReply() const
     reply.set_type(_request.type());
     reply.set_reply(_isProcessed ? ServerReplyCode::SUCCESS : ServerReplyCode::FAILURE);
     return reply;
-}
-
-const sockaddr_in& ConfirmDeliveryRequest::GetPeer() const
-{
-    return _peer;
 }

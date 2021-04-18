@@ -4,6 +4,7 @@
 #include "IRequest.h"
 #include <netinet/in.h>
 #include "Storage.h"
+#include "ClassLog.h"
 
 /**
  * This class handles SEND_MSG request.
@@ -12,13 +13,13 @@ class SendMsgRequest : public IRequest
 {
 private:
     /**
+     * Logger instance.
+     */
+    ClassLog _log;
+    /**
      * Request to be processed.
      */
-    ServerRequest _request;
-    /**
-     * Client/peer info.
-     */
-    sockaddr_in _peer;
+    const ServerRequest &_request;
     /**
      * Storage instance.
      */
@@ -29,10 +30,9 @@ private:
     bool _isProcessed;
 
 public:
-    SendMsgRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer);
+    SendMsgRequest(Storage *storage, const ServerRequest &request);
     virtual void Process();
     virtual ServerReply GetReply() const;
-    virtual const sockaddr_in& GetPeer() const;
 };
 
 #endif // SENDMSGREQUEST_H

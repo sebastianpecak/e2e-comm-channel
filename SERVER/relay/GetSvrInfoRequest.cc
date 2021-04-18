@@ -5,10 +5,9 @@
 #define SERVER_NAME    "e2e_svr_relay_"
 #define SERVER_VERSION "linux_0.0.1_"
 
-GetSvrInfoRequest::GetSvrInfoRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer) :
+GetSvrInfoRequest::GetSvrInfoRequest(Storage *storage, const ServerRequest &request) :
     _storage(storage),
     _request(request),
-    _peer(peer),
     _isProcessed(false)
 {
 }
@@ -44,9 +43,4 @@ ServerReply GetSvrInfoRequest::GetReply() const
     reply.set_reply(_isProcessed ? ServerReplyCode::SUCCESS : ServerReplyCode::FAILURE);
     reply.set_data(_info.SerializeAsString());
     return reply;
-}
-
-const sockaddr_in& GetSvrInfoRequest::GetPeer() const
-{
-    return _peer;
 }

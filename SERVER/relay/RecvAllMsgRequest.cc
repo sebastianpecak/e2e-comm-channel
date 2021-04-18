@@ -1,9 +1,9 @@
 #include "RecvAllMsgRequest.h"
 
-RecvAllMsgRequest::RecvAllMsgRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer) :
+RecvAllMsgRequest::RecvAllMsgRequest(Storage *storage, const ServerRequest &request) :
+    _log("RecvAllMsgRequest"),
     _storage(storage),
     _request(request),
-    _peer(peer),
     _isProcessed(false)
 {
 }
@@ -14,7 +14,7 @@ void RecvAllMsgRequest::Process()
     AllMessagesRequest allMsg;
     if (not allMsg.ParseFromString(_request.data()))
     {
-        fprintf(stderr, "RecvAllMsgRequest::Process: Failed to parse AllMessagesRequest.");
+        LOG_ERROR() << "Failed to parse AllMessagesRequest.";
         return;
     }
     // Make reply out of undelivered messages.
@@ -38,9 +38,3 @@ ServerReply RecvAllMsgRequest::GetReply() const
     reply.set_data(_allMsgReply.SerializeAsString());
     return reply;
 }
-
-const sockaddr_in& RecvAllMsgRequest::GetPeer() const
-{
-    return _peer;
-}
-

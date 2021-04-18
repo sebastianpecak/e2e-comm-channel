@@ -2,9 +2,9 @@
 #define CONFIRMDELIVERYREQUEST_H
 
 #include "IRequest.h"
-#include <netinet/in.h>
 #include "Storage.h"
 #include "AllMessages.pb.h"
+#include "ClassLog.h"
 
 /**
  * This class handles CONFIRM_DELIVERY request.
@@ -13,13 +13,13 @@ class ConfirmDeliveryRequest : public IRequest
 {
 private:
     /**
+     * Logger instance.
+     */
+    ClassLog _log;
+    /**
      * Request to be processed.
      */
-    ServerRequest _request;
-    /**
-     * Client/peer info.
-     */
-    sockaddr_in _peer;
+    const ServerRequest &_request;
     /**
      * Storage instance.
      */
@@ -28,16 +28,11 @@ private:
      * This flag indicates if processing of request was successfull.
      */
     bool _isProcessed;
-    /**
-     * Reply object.
-     */
-    //AllMessagesReply _allMsgReply;
 
 public:
-    ConfirmDeliveryRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer);
+    ConfirmDeliveryRequest(Storage *storage, const ServerRequest &request);
     virtual void Process();
     virtual ServerReply GetReply() const;
-    virtual const sockaddr_in& GetPeer() const;
 };
 
 #endif // CONFIRMDELIVERYREQUEST_H

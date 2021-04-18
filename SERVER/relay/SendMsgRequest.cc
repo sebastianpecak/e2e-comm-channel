@@ -1,9 +1,9 @@
 #include "SendMsgRequest.h"
 
-SendMsgRequest::SendMsgRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer) :
+SendMsgRequest::SendMsgRequest(Storage *storage, const ServerRequest &request) :
+    _log("SendMsgRequest"),
     _storage(storage),
     _request(request),
-    _peer(peer),
     _isProcessed(false)
 {
 }
@@ -14,7 +14,7 @@ void SendMsgRequest::Process()
     TargetMessage tgtMsg;
     if (not tgtMsg.ParseFromString(_request.data()))
     {
-        fprintf(stderr, "SendMsgRequest::Process: Failed to parse TargetMessage.");
+        LOG_ERROR() << "Failed to parse TargetMessage.";
         return;
     }
     _storage->NewMessage(tgtMsg);
@@ -27,9 +27,4 @@ ServerReply SendMsgRequest::GetReply() const
     reply.set_type(_request.type());
     reply.set_reply(_isProcessed ? ServerReplyCode::SUCCESS : ServerReplyCode::FAILURE);
     return reply;
-}
-
-const sockaddr_in& SendMsgRequest::GetPeer() const
-{
-    return _peer;
 }

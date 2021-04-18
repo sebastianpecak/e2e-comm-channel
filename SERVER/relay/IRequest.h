@@ -2,7 +2,6 @@
 #define IREQUEST_H
 
 #include "ServerInterface.pb.h"
-#include <netinet/in.h>
 
 /**
  * This is interface class which is implemented by specific request processor.
@@ -21,7 +20,6 @@ public:
      * Creates and returns server reply message based on processing result.
      */
     virtual ServerReply GetReply() const = 0;
-    virtual const sockaddr_in& GetPeer() const = 0;
 };
 
 #endif // IREQUEST_H

@@ -3,26 +3,51 @@
 
 #include "Storage.h"
 #include "IRequest.h"
+#include "ServerSocket.h"
+#include "ClientServant.h"
+#include "ClassLog.h"
 
 class Application
 {
 private:
     /**
-     * Main application instance of storage.
+     * Class' logger instance.
      */
-    Storage *_storage;
+    ClassLog _log;
     /**
-     * Main server UDP socket.
+     * Main instance of storage.
      */
-    int _mainSocket;
-
-    void _ProcessRequest(const void *data, unsigned int msgSize, const sockaddr_in &peer, int cliSocket);
-    void _SendReply(const IRequest &request, int cliSocket);
-
+    Storage _storage;
+    /**
+     * Main server socket.
+     */
+    ServerSocket _socket;
+    /**
+     * Main instance of client servant class.
+     */
+    ClientServant _servant;
+    /**
+     * This flag indicates if server stop was requested.
+     */
+    bool _stopRequest;
 
 public:
-    Application(int argc, char **argv);
-    int Run();
+    /**
+     * Basic ctor.
+     */
+    Application();
+    /**
+     * Runs server processing loop.
+     * To stop need to call Stop method.
+     */
+    void Run();
+    /**
+     * Request server stop.
+     */
+    inline void Stop()
+    {
+        _stopRequest = true;
+    }
 };
 
 #endif // APPLICATION_H

@@ -2,7 +2,6 @@
 #define GETSVRINFOREQUEST_H
 
 #include "IRequest.h"
-#include <netinet/in.h>
 #include "Storage.h"
 #include "AllMessages.pb.h"
 #include "ServerInfo.pb.h"
@@ -18,10 +17,6 @@ private:
      */
     ServerRequest _request;
     /**
-     * Client/peer info.
-     */
-    sockaddr_in _peer;
-    /**
      * Storage instance.
      */
     Storage *_storage;
@@ -32,14 +27,12 @@ private:
     /**
      * Reply object.
      */
-    //AllMessagesReply _allMsgReply;
     ServerInfo _info;
 
 public:
-    GetSvrInfoRequest(Storage *storage, const ServerRequest &request, const sockaddr_in &peer);
+    GetSvrInfoRequest(Storage *storage, const ServerRequest &request);
     virtual void Process();
     virtual ServerReply GetReply() const;
-    virtual const sockaddr_in& GetPeer() const;
 };
 
 #endif // GETSVRINFOREQUEST_H
