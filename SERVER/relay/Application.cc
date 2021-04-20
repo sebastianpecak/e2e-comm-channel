@@ -35,10 +35,16 @@ void Application::Run()
     // Start accepting new connections from clients.
     while (not _stopRequest)
     {
-        // Try to receive new client's request.
-        if (not _socket.Accept(client))
+        // Try to accept new client's connection.
+        if (not _socket.TryAccept(client))
         {
-            LOG_ERROR() << "Failed to accept new client's connection.";
+            // Break on error.
+            if (not _socket.WasTimeout())
+            {
+                LOG_ERROR() << "Failed to accept new client's connection.";
+                break;
+            }
+            // Continue otherwise.
             continue;
         }
 

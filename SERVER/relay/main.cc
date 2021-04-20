@@ -24,12 +24,10 @@ int main(int argc, char **argv)
 
 void _InstallSignalHandlers()
 {
-    static_cast<void>(signal(SIGINT , _SignalHanlder));
-    static_cast<void>(signal(SIGABRT, _SignalHanlder));
-    static_cast<void>(signal(SIGKILL, _SignalHanlder));
+    static_cast<void>(signal(SIGINT, _SignalHanlder));
 }
 
-void _SignalHanlder(int signal)
+void _SignalHanlder(int)
 {
     app.Stop();
 }

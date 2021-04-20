@@ -3,14 +3,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-static constexpr int INVALID_SOCKET    = -1;
-static constexpr short SERVER_PORT     = 1111;
-static constexpr char SERVER_ADDRESS[] = "127.0.0.1";
+static constexpr int   INVALID_SOCKET    = -1;
+static constexpr short SERVER_PORT       = 1111;
+static constexpr char  SERVER_ADDRESS[]  = "127.0.0.1";
+static constexpr int   ACCEPT_TIMEOUT_MS = 1000;
 
 ServerSocket::ServerSocket() :
     _log("ServerSocket"),
     _socket(INVALID_SOCKET),
-    _address()
+    _address(),
+    _acceptWasTimeout(false),
+    _acceptPoll()
 {
     // Prepare address object.
     _address.sin_family = AF_INET;
@@ -38,6 +41,9 @@ bool ServerSocket::Open()
         LOG_ERROR() << "Failed to create new socket, due to: " << errno << '.';
         return false;
     }
+    // Prepare poll structure.
+    _acceptPoll[0].fd     = _socket;
+    _acceptPoll[0].events = POLLIN;
     // Try to bind socket to address and port.
     const auto bindResult = bind(_socket, reinterpret_cast<sockaddr*>(&_address), sizeof(_address));
     if (bindResult != 0)
@@ -70,8 +76,23 @@ bool ServerSocket::Close()
     return true;
 }
 
-bool ServerSocket::Accept(ClientConnection &newClient)
+bool ServerSocket::TryAccept(ClientConnection &newClient)
 {
+    // Reset wasTimeout flag.
+    _acceptWasTimeout = false;
+    // Try to accept for ACCEPT_TIMEOUT_MS.
+    const auto pollResult = poll(_acceptPoll, POLL_SET_SIZE, ACCEPT_TIMEOUT_MS);
+    if (pollResult < 0)
+    {
+        LOG_ERROR() << "Failed to poll socket for reading, due to " << errno << '.';
+        return false;
+    }
+    else if (pollResult == 0)
+    {
+        LOG_INFO() << "Accept timeout has occured.";
+        _acceptWasTimeout = true;
+        return false;
+    }
     // Try to accept new client's connection.
     const auto newSocket = accept(_socket, nullptr, nullptr);
     if (newSocket < 0)
@@ -88,4 +109,9 @@ bool ServerSocket::Accept(ClientConnection &newClient)
 bool ServerSocket::IsOpened() const
 {
     return (_socket != INVALID_SOCKET);
+}
+
+bool ServerSocket::WasTimeout() const
+{
+    return _acceptWasTimeout;
 }

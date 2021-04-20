@@ -16,6 +16,7 @@ ClientServant::~ClientServant()
 
 void ClientServant::Serve(ClientConnection &&connection)
 {
+    LOG_INFO() << "Serving new client...";
     // Process all client's requests.
     ServerRequest request;
     while (connection.IsActive())
@@ -23,16 +24,17 @@ void ClientServant::Serve(ClientConnection &&connection)
         // Try to receive client's request.
         if (not connection.Recv(request))
         {
-            LOG_ERROR() << "No request received.";
+            LOG_INFO() << "No request received.";
             continue;
         }
-
+        // Try to process received request.
         if (not _ProcessRequest(connection, request))
         {
             LOG_ERROR() << "Failed to process client's request.";
             continue;
         }
     }
+    LOG_INFO() << "Serving new client ended.";
 }
 
 bool ClientServant::_ProcessRequest(ClientConnection &connection, const ServerRequest &request)

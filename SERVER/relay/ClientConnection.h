@@ -4,6 +4,7 @@
 #include "Noncopyable.h"
 #include "ServerInterface.pb.h"
 #include "ClassLog.h"
+#include <poll.h>
 
 /**
  * This is movable, but not copyable class that represents client's socket.
@@ -16,6 +17,7 @@ private:
      * Size of reception buffer.
      */
     static constexpr int RECEPTION_BUFFER_SIZE = 1 << 12;
+    static constexpr int POLL_SET_SIZE         = 1;
 
     /**
      * Logger instance.
@@ -33,6 +35,20 @@ private:
      * This flag indicates if there was end-of-file in stream.
      */
     bool _endOfFile;
+    /**
+     * This flag indicates some error condition or program interuption.
+     */
+    bool _forceStop;
+    /**
+     * File descriptor set for polling socket.
+     */
+    pollfd _recvPoll[POLL_SET_SIZE];
+
+    /**
+     * This is internal function.
+     * Returns true if socket is opened and cleanup is needed.
+     */
+    bool _IsOpened() const;
 
 public:
     /**
