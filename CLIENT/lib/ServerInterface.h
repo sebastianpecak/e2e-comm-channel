@@ -1,6 +1,7 @@
 #ifndef SERVERINTERFACE_H
 #define SERVERINTERFACE_H
 
+#include "ClassLog.h"
 #include "ServerConnection.h"
 #include "ServerInterface.pb.h"
 #include "ServerInfo.pb.h"
@@ -11,6 +12,11 @@
 
 class ServerInterface
 {
+private:
+    /**
+     * Logger instance.
+     */
+    ClassLog _log;
     /**
      * Connection to the server.
      */
@@ -23,6 +29,7 @@ class ServerInterface
     bool _TalkWithServer(const ServerRequest &request, ServerReply &reply);
 
 public:
+    ServerInterface();
     /**
      * Obtains server-related information and puts it into output.
      * Returns true on success.

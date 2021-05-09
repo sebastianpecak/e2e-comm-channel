@@ -1,12 +1,17 @@
 #ifndef SERVERCONNECTION_H
 #define SERVERCONNECTION_H
 
+#include "ClassLog.h"
 #include <netinet/in.h>
 #include <string>
 
 class ServerConnection
 {
 private:
+    /**
+     * Logger instance.
+     */
+    ClassLog _log;
     /**
      * Reception buffer size.
      */

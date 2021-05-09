@@ -9,6 +9,7 @@ static constexpr short SERVER_PORT     = 1111;
 static constexpr char SERVER_ADDRESS[] = "127.0.0.1";
 
 ServerConnection::ServerConnection() :
+    _log("ServerConnection"),
     _socket(INVALID_SOCKET),
     _svrAddress()
 {
@@ -34,13 +35,13 @@ bool ServerConnection::Open()
     _socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_socket == INVALID_SOCKET)
     {
-        std::cerr << "Failed to open TCP socket, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to open TCP socket, due to: " << errno << '.';
         return false;
     }
     // Try to connect to server.
     if (connect(_socket, reinterpret_cast<sockaddr*>(&_svrAddress), sizeof(_svrAddress)) != 0)
     {
-        std::cerr << "Failed to connect TCP socket, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to connect TCP socket, due to: " << errno << '.';
         Close();
         return false;
     }
@@ -59,12 +60,12 @@ bool ServerConnection::Close()
     bool result = true;
     if (shutdown(_socket, SHUT_RDWR) != 0)
     {
-        std::cerr << "Failed to shutdown TCP socket, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to shutdown TCP socket, due to: " << errno << '.';
         result = false;
     }
     if (close(_socket) != 0)
     {
-        std::cerr << "Failed to close TCP socket, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to close TCP socket, due to: " << errno << '.';
         result = false;
     }
     // Invaidate socket file descriptor and return result.
@@ -82,19 +83,19 @@ bool ServerConnection::Send(const std::string &data)
     // Connection must be opened prior to sending data.
     if (not IsOpened())
     {
-        std::cerr << "Opened connection is required for sending." << std::endl;
+        LOG_ERROR() << "Opened connection is required for sending.";
         return false;
     }
     // Try to send all data.
     const auto result = send(_socket, data.data(), data.size(), 0);
     if (result < 0)
     {
-        std::cerr << "Failed to send data to server, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to send data to server, due to: " << errno << '.';
         return false;
     }
     if (result < data.size())
     {
-        std::cerr << "Sent only " << result << " bytes of data." << std::endl;
+        LOG_ERROR() << "Sent only " << result << " bytes of data.";
         return false;
     }
     // Success.
@@ -106,14 +107,14 @@ bool ServerConnection::Recv(std::string &buffer)
     // Connection must be opened prior to receiving data.
     if (not IsOpened())
     {
-        std::cerr << "Opened connection is required for receiving." << std::endl;
+        LOG_ERROR() << "Opened connection is required for receiving.";
         return false;
     }
     // Try to receive some data.
     const auto result = recv(_socket, _buffer, sizeof(_buffer), 0);
     if (result < 1)
     {
-        std::cerr << "Failed to receive data from TCP socket, due to: " << errno << std::endl;
+        LOG_ERROR() << "Failed to receive data from TCP socket, due to: " << errno << '.';
         return false;
     }
     // Copy received data to output buffer.

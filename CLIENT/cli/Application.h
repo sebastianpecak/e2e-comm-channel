@@ -6,16 +6,39 @@
 #include "CommandLine.h"
 #include "Session.h"
 
+/**
+ * CLI client application class.
+ */
 class Application
 {
 private:
-    Session _session;
-    UserKeyStore _keyStore;
-    ServerInterface _svrIface;
-    CommandLine _cli;
+    /**
+     * Session manager instance.
+     */
+    Session *_session;
+    /**
+     * Keys manager instance.
+     */
+    UserKeyStore *_keyStore;
+    /**
+     * Simple interface to server which keeps the connection opened all the time.
+     */
+    ServerInterface *_svrIface;
+    /**
+     * Command line processor instance.
+     */
+    CommandLine *_cli;
 
 public:
-    Application();
+    /**
+     * Basic ctor.
+     * It registers all needed command handlers in 'cli' object.
+     */
+    Application(Session *session, UserKeyStore *keyStore, ServerInterface *svrIface, CommandLine *cli);
+    /**
+     * This function reads user's commands and processes them properly.
+     * It returns to caller when user types 'exit' command.
+     */
     void Run();
 };
 

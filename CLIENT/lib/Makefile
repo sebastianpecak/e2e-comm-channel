@@ -33,7 +33,7 @@ main: $(OUTPUT_LIB_NAME).so $(OUTPUT_LIB_NAME).a
 # Remove all build artifacts.
 clean:
 	@$(RM) *.cc.o
-	@$(RM) $(OUTPUT_LIB_NAME)
+	@$(RM) $(OUTPUT_LIB_NAME).*
 
 # Install built library in target location.
 install:
