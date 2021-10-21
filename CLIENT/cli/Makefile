@@ -7,7 +7,7 @@ INCLUDE_PATH = ../../INTERFACE ../lib
 INCLUDES = $(addprefix -I, $(INCLUDE_PATH))
 
 # Library output name.
-OUTPUT_NAME      = e2eem-client
+OUTPUT_NAME      = e2eem-cli
 OUTPUT_APP_NAME  = $(OUTPUT_NAME).bin
 OUTPUT_TEST_NAME = $(OUTPUT_APP_NAME).test
 

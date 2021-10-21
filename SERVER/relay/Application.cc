@@ -1,5 +1,4 @@
 #include "Application.h"
-
 #include <cstring>
 #include <cstdio>
 #include <unistd.h>

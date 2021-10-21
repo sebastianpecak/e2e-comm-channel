@@ -24,6 +24,8 @@ void ConfirmDeliveryRequest::Process()
         {
             _storage->ConfirmDelivery(confirmMsg.userid(), msg.first);
         }
+        // NOK can be result of communication channel being attacked.
+        // Need to introduce some kind of send-retry counter instead of removing message right away.
         else if (msg.second == DeliveryStatus::MSG_NOK)
         {
             _storage->RemoveMessage(confirmMsg.userid(), msg.first);

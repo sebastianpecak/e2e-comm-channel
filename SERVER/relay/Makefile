@@ -5,6 +5,7 @@ CCFLAGS = -g
 LDFLAGS =
 INCLUDE_PATH = ../../INTERFACE
 INCLUDES = $(addprefix -I, $(INCLUDE_PATH))
+DEFINES = -DMITM_SIMULATION
 
 # Library output name.
 OUTPUT_NAME      = e2eem-relay
@@ -77,7 +78,7 @@ debug_print:
 	$(MAKE) -C $(dir $@)
 
 %.cc.o: %.cc
-	$(CC) -c -o $@ $< $(CCFLAGS) $(INCLUDES)
+	$(CC) -c -o $@ $< $(CCFLAGS) $(INCLUDES) $(DEFINES)
 
 %.bin: $(BUILD_OBJ) $(APP_DEPENDENCIES)
 	$(CC) -o $@ $^ $(LDFLAGS)

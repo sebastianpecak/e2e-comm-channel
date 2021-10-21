@@ -7,8 +7,8 @@
 #include <cryptopp/hex.h>
 #include <fstream>
 
-#define ENV_DB_PATH     "E2E_CLI_DB_PATH"
-#define DEFAULT_DB_PATH "default-cli-db"
+#define ENV_DB_PATH     "E2EEM_CLI_DB_PATH"
+#define DEFAULT_DB_PATH "e2eem-cli.db"
 
 UserKeyStore::UserKeyStore()
 {

@@ -7,6 +7,15 @@
 #include <poll.h>
 
 /**
+ * Create macro which sets methods as virtual if needed.
+ */
+#ifdef MITM_SIMULATION
+#define VIRTUAL virtual
+#else
+#define VIRTUAL
+#endif // MITM_SIMULATION
+
+/**
  * This is movable, but not copyable class that represents client's socket.
  * Using this class we and send to and receive from client.
  */
@@ -71,12 +80,12 @@ public:
      * Sends request to peer.
      * Returns true on success.
      */
-    bool Send(const ServerReply &reply);
+    VIRTUAL bool Send(const ServerReply &reply);
     /**
      * Waits for request from peer.
      * Returns true if there was a request received.
      */
-    bool Recv(ServerRequest &request);
+    VIRTUAL bool Recv(ServerRequest &request);
     /**
      * Invalidate and close connection.
      * Returns true on success.

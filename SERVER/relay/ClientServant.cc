@@ -3,6 +3,7 @@
 #include "RecvAllMsgRequest.h"
 #include "ConfirmDeliveryRequest.h"
 #include "GetSvrInfoRequest.h"
+#include "ClientConnectionMITM.h"
 
 ClientServant::ClientServant(Storage *storage) :
     _log("ClientServant"),
@@ -14,11 +15,16 @@ ClientServant::~ClientServant()
 {
 }
 
-void ClientServant::Serve(ClientConnection &&connection)
+void ClientServant::Serve(ClientConnection &&inConnection)
 {
     LOG_INFO() << "Serving new client...";
     // Process all client's requests.
     ServerRequest request;
+#ifdef MITM_SIMULATION
+    ClientConnectionMITM connection(std::move(inConnection));
+#else
+    auto &connection = inConnection;
+#endif // MITM_SIMULATION
     while (connection.IsActive())
     {
         // Try to receive client's request.

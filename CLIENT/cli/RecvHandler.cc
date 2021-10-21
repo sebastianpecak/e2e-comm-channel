@@ -47,28 +47,46 @@ void RecvHandler::Execute(const Tokenizer &tokens)
         // Decrypt symetric key.
         RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(_session->GetKey());
         SafeString aesKey;
-        StringSource(
-            reinterpret_cast<const byte*>(tm.encsymetrickey().data()),
-            tm.encsymetrickey().size(),
-            true,
-            new PK_DecryptorFilter(
-                _rng,
-                aesKeyDecryptor,
-                new StringSink(aesKey.str())
-            )
-        );
+        try
+        {
+            StringSource(
+                reinterpret_cast<const byte*>(tm.encsymetrickey().data()),
+                tm.encsymetrickey().size(),
+                true,
+                new PK_DecryptorFilter(
+                    _rng,
+                    aesKeyDecryptor,
+                    new StringSink(aesKey.str())
+                )
+            );
+        }
+        catch (const std::exception &e)
+        {
+            (*deliveryMsg.mutable_msgstatus())[ftm.id()] = DeliveryStatus::MSG_NOK;
+            std::cerr << "Failed to decrypt symetric key, due to: " << e.what() << std::endl;
+            continue;
+        }
         // Decrypt and deserialize source message.
         std::string decSrcMsg;
-        StringSource(
-            reinterpret_cast<const byte*>(tm.encdata().data()),
-            tm.encdata().size(),
-            true,
-            new DefaultDecryptorWithMAC(
-                reinterpret_cast<const byte*>(aesKey.str().data()),
-                aesKey.str().size(),
-                new StringSink(decSrcMsg)
-            )
-        );
+        try
+        {
+            StringSource(
+                reinterpret_cast<const byte*>(tm.encdata().data()),
+                tm.encdata().size(),
+                true,
+                new DefaultDecryptorWithMAC(
+                    reinterpret_cast<const byte*>(aesKey.str().data()),
+                    aesKey.str().size(),
+                    new StringSink(decSrcMsg)
+                )
+            );
+        }
+        catch (const std::exception &e)
+        {
+            (*deliveryMsg.mutable_msgstatus())[ftm.id()] = DeliveryStatus::MSG_NOK;
+            std::cerr << "Failed to decrypt message " << ftm.id() << ", due to: " << e.what() << std::endl;
+            continue;
+        }
         SourceMessage srcMsg;
         if (not srcMsg.ParseFromString(decSrcMsg))
         {

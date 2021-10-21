@@ -11,4 +11,4 @@ CLIENT/cli/*.pb.cc
 CLIENT/cli/*.pb.h
 .vscode/*
 */.vscode/*
-default-cli-db
+*.db
