@@ -7,7 +7,7 @@ void HelpHandler::Execute(const Tokenizer&)
     printf("    This is E2EEM tool's client application used to send and receive messages from relay server.\n");
     printf("    It also delivers user managment tools.\n");
     printf("Usage:\n");
-    printf("    [E2E_CLI_DB_PATH=/path/to/db] ./cli.bin\n");
+    printf("    [E2EEM_CLI_DB_PATH=/path/to/db] ./e2eem-cli.bin\n");
     printf("Commands list:\n");
     printf("    login <user-id>              - Start new session as given user.\n");
     printf("    logout                       - End current user's session.\n");
