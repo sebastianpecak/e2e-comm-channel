@@ -45,7 +45,7 @@ void SendHandler::Execute(const Tokenizer &tokens)
     plainTextMessage.set_text(userMessage);
     const auto sptm = plainTextMessage.SerializeAsString();
     // Sign source message.
-    RSASS<PSS, SHA256>::Signer signer(_session->GetKey());
+    RSASS<PKCS1v15, SHA256>::Signer signer(_session->GetKey());
     std::string signature;
     StringSource(
         reinterpret_cast<const byte*>(sptm.data()),

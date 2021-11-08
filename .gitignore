@@ -12,3 +12,12 @@ CLIENT/cli/*.pb.h
 .vscode/*
 */.vscode/*
 *.db
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/Driver.cpp
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/GCMTest.vcproj
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/stdafx.cpp
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/stdafx.h
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/targetver.h
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/Vectors.txt
+EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/CryptoPPTest.sln
+RESEARCH/enc-speed-comparsion/results.csv
+RESEARCH/enc-speed-comparsion/results.xlsx

@@ -95,7 +95,7 @@ void RecvHandler::Execute(const Tokenizer &tokens)
             continue;
         }
         // Verify signature of source message.
-        RSASS<PSS, SHA256>::Verifier verifier(_keyStore->GetPublicKey(srcMsg.sourceid()));
+        RSASS<PKCS1v15, SHA256>::Verifier verifier(_keyStore->GetPublicKey(srcMsg.sourceid()));
         std::string serializedMsg;
         try
         {

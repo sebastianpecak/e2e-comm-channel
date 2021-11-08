@@ -121,7 +121,7 @@ void _TestAES(const void *data, unsigned int dataSize)
 
 void _PrintHeader()
 {
-    std::cout << "type;key_size(bits);data_block_size;duration(ms)" << std::endl;
+    std::cout << "type;key_size(bits);data_block_size(bytes);duration(ms)" << std::endl;
 }
 
 void _PrintResult(const std::string &type, unsigned int keySize, unsigned int dataSize, const std::chrono::milliseconds &dur)
