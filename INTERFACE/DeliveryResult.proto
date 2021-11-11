@@ -5,9 +5,10 @@ syntax = "proto3";
 
 enum DeliveryStatus
 {
-    UNKNOWN = 0;
-    MSG_OK  = 1;
-    MSG_NOK = 2;
+    UNKNOWN           = 0;
+    MSG_OK            = 1;
+    MSG_NOK           = 2;
+    INVALID_TARGET_ID = 3;
 }
 
 message DeliveryResult

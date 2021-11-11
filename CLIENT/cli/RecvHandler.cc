@@ -44,6 +44,13 @@ void RecvHandler::Execute(const Tokenizer &tokens)
     {
         const auto &ftm = allMsg.messages(i);
         const auto &tm  = ftm.msg();
+        // Verify target id (if we are intented recipient).
+        if (tm.targetid() != _session->GetId())
+        {
+            (*deliveryMsg.mutable_msgstatus())[ftm.id()] = DeliveryStatus::INVALID_TARGET_ID;
+            std::cerr << "Message target id is invalid (not intented for us)." << std::endl;
+            continue;
+        }
         // Decrypt symetric key.
         RSAES_OAEP_SHA_Decryptor aesKeyDecryptor(_session->GetKey());
         SafeString aesKey;

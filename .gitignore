@@ -21,3 +21,5 @@ EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/Driver/Vectors.txt
 EXAMPLES/AES-GCM-Test/Crypto++ GCM-AES Test/CryptoPPTest.sln
 RESEARCH/enc-speed-comparsion/results.csv
 RESEARCH/enc-speed-comparsion/results.xlsx
+CLIENT/cli/.vscode/launch.json
+CLIENT/cli/.vscode/tasks.json

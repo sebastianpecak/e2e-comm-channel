@@ -37,5 +37,5 @@ void CreateUserHandler::Execute(const Tokenizer &tokens)
         return;
     }
     _keyStore->CreateUser(tokens.GetToken(1), pwd);
-    std::cout << std::endl << "New user has been added." << std::endl;
+    std::cout << std::endl << "New user " << tokens.GetToken(1) << " has been added." << std::endl;
 }

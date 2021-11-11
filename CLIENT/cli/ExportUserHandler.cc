@@ -19,5 +19,5 @@ void ExportUserHandler::Execute(const Tokenizer &tokens)
         std::cerr << "There is no such user." << std::endl;
         return;
     }
-    std::cout << "COMPACT-RECORD: " << _keyStore->ExportCompactRecord(tokens.GetToken(1)) << std::endl;
+    std::cout << tokens.GetToken(1) << "-COMPACT-RECORD: " << _keyStore->ExportCompactRecord(tokens.GetToken(1)) << std::endl;
 }

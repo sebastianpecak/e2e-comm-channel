@@ -28,11 +28,11 @@ void ConfirmDeliveryRequest::Process()
         // Need to introduce some kind of send-retry counter instead of removing message right away.
         else if (msg.second == DeliveryStatus::MSG_NOK)
         {
-            _storage->RemoveMessage(confirmMsg.userid(), msg.first);
+            //_storage->RemoveMessage(confirmMsg.userid(), msg.first);
         }
         else
         {
-            LOG_ERROR() << "Unkown delivery message status " << msg.first << '.';
+            //LOG_ERROR() << "Unkown delivery message status " << msg.first << '.';
         }
     }
     _isProcessed = true;

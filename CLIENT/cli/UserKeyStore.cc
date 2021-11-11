@@ -233,5 +233,8 @@ bool UserKeyStore::ImportCompactRecord(const std::string &compactRecord)
     AppDbRecord *newRecord = _db.add_records();
     newRecord->set_userid(userId);
     newRecord->set_publickey(rawPublicKey);
+    // Print imported user name (this must be moved to Handler class).
+    std::cout << "Added new user " << userId << '.' << std::endl;
+    //
     return true;
 }
